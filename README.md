@@ -5,7 +5,7 @@
 
 This module supports encoding arbitrary record types. It makes no effort to parse a record's content so is compatible with all current and future record types.
 
-The zone file output will be sorted by record type with a comment above each type section. Note that currently many features of zone files are unsupported (See the [TODOs]("./index.js")).
+The zone file output will be sorted by record type with a comment above each type section. Note that currently many features of zone files are unsupported (See the [TODOs](index.js)).
 
 ## Installation
 
