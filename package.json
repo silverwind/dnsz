@@ -1,0 +1,31 @@
+{
+  "name": "dnsz",
+  "version": "0.0.0",
+  "description": "Generic DNS zone file parser and stringifier",
+  "author": "silverwind <me@silverwind.io>",
+  "repository": "silverwind/dnsz",
+  "license": "BSD-2-Clause",
+  "scripts": {
+    "test": "make test"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-silverwind": "^3.0.3",
+    "updates": "^8.1.0",
+    "ver": "5.0.1"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "dns",
+    "dnsz",
+    "zone",
+    "zone-file",
+    "bind",
+    "generic"
+  ]
+}

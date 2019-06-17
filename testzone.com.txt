@@ -1,0 +1,27 @@
+;; SOA Records
+testzone.com.	3600	IN	SOA	testzone.com. root.testzone.com. 2031242781 7200 3600 86400 3600
+
+;; A Records
+testzone.com.	60	IN	A	1.2.3.4
+sub.testzone.com.	60	IN	A	1.2.3.4
+
+;; AAAA Records
+testzone.com.	120	IN	AAAA	2001:db8::1
+sub.testzone.com.	120	IN	AAAA	2001:db8::1
+
+;; CAA Records
+testzone.com.	120	IN	CAA	0 issue "letsencrypt.org"
+
+;; CNAME Records
+cname1.testzone.com.	120	IN	CNAME	example.com.
+cname2.testzone.com.	120	IN	CNAME	example.
+
+;; MX Records
+testzone.com.	120	IN	MX	10 mx.zoho.com.
+testzone.com.	120	IN	MX	10 mx3.zoho.com.
+testzone.com.	120	IN	MX	10 mx2.zoho.com.
+
+;; TXT Records
+testzone.com.	120	IN	TXT	"third record"
+testzone.com.	120	IN	TXT	"second record"
+testzone.com.	120	IN	TXT	"first record"
