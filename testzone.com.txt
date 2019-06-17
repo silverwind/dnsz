@@ -14,7 +14,7 @@ testzone.com.	120	IN	CAA	0 issue "letsencrypt.org"
 
 ;; CNAME Records
 cname1.testzone.com.	120	IN	CNAME	example.com.
-cname2.testzone.com.	120	IN	CNAME	example.
+cname2.testzone.com.	120	IN	CNAME	example.com.
 
 ;; MX Records
 testzone.com.	120	IN	MX	10 mx.zoho.com.

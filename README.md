@@ -3,7 +3,9 @@
 
 > Generic DNS zone file parser and stringifier
 
-This module supports encoding arbitrary record types. The zone file output will be sorted by record type with a comment above each type section. Note that currently many features of zone files are unsupported.
+This module supports encoding arbitrary record types. It makes no effort to parse a record's content so is compatible with all current and future record types.
+
+The zone file output will be sorted by record type with a comment above each type section. Note that currently many features of zone files are unsupported (See the [TODOs]("./index.js")).
 
 ## Installation
 
@@ -41,7 +43,7 @@ A single record is represented as `{name, ttl, class, type, content}` where:
 - `ttl`: The TTL in seconds, e.g. `60`.
 - `class`: The DNS class, e.g. `IN`.
 - `type`: The record type, e.g. `A`.
-- `content`: The record content, e.g. `2001:db8::1`.
+- `content`: The record content, e.g. `2001:db8::1` or `example.com.`.
 
 ## License
 
