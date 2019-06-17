@@ -11,7 +11,9 @@ const exit = err => {
 
 const main = async () => {
   const str = await fs.readFile("./testzone.com.txt", "utf8");
-  assert.deepEqual(str, m.stringify(m.parse(str)));
+  const parsed = m.parse(str);
+  const roundtripped = m.stringify(parsed);
+  assert.deepEqual(str, roundtripped);
 };
 
 main().then(exit).catch(exit);

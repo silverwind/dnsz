@@ -39,11 +39,12 @@ Create a string of a DNS zone file from a object in the format `{records: []}`.
 
 A single record is represented as `{name, ttl, class, type, content}` where:
 
-- `name`: The lowercase DNS name without a trailing dot, e.g. `example.com`.
+- `name`: The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
 - `ttl`: The TTL in seconds, e.g. `60`.
-- `class`: The DNS class, e.g. `IN`.
-- `type`: The record type, e.g. `A`.
-- `content`: The record content, e.g. `2001:db8::1` or `example.com.`.
+- `class`: The DNS class, e.g. `"IN"`.
+- `type`: The record type, e.g. `"A"`.
+- `content`: The record content, e.g. `"2001:db8::1"` or `"example.com."`.
+- `comment`: A comment for this record, e.g. `"a comment"`.
 
 ## License
 

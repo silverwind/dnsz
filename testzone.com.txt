@@ -2,8 +2,8 @@
 testzone.com.	3600	IN	SOA	testzone.com. root.testzone.com. 2031242781 7200 3600 86400 3600
 
 ;; A Records
-testzone.com.	60	IN	A	1.2.3.4
-sub.testzone.com.	60	IN	A	1.2.3.4
+testzone.com.	60	IN	A	1.2.3.4	; a comment
+sub.testzone.com.	60	IN	A	1.2.3.4	; another comment
 
 ;; AAAA Records
 testzone.com.	120	IN	AAAA	2001:db8::1
