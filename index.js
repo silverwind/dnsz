@@ -68,7 +68,7 @@ function format(records, type, origin) {
   return `${str}\n`;
 }
 
-module.exports.parse = str => {
+module.exports.parse = (str, {replaceOrigin} = {}) => {
   const data = {records: []};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -94,13 +94,15 @@ module.exports.parse = str => {
     data.header = headerLines.join("\n");
   }
 
-  // search for $ORIGIN
-  let origin;
-  for (const line of lines) {
-    if (line.startsWith("$ORIGIN ")) {
-      origin = normalize(line.replace(/;.+/, "").trim().substring("$ORIGIN ".length));
-      data.origin = origin;
-      break;
+  if (replaceOrigin) {
+    data.origin = replaceOrigin;
+  } else {
+    // search for $ORIGIN
+    for (const line of lines) {
+      if (line.startsWith("$ORIGIN ")) {
+        data.origin = normalize(line.replace(/;.+/, "").trim().substring("$ORIGIN ".length));
+        break;
+      }
     }
   }
 
@@ -127,11 +129,11 @@ module.exports.parse = str => {
     if (!name) continue;
 
     data.records.push({
-      name: normalize((name.includes("@") && origin) ? name.replace(/@/g, origin) : name),
+      name: normalize((name.includes("@") && data.origin) ? name.replace(/@/g, data.origin) : name),
       ttl: Number(ttl),
       class: cls.toUpperCase(),
       type: type.toUpperCase(),
-      content: ((content.includes("@") && origin) ? content.replace(/@/g, origin) : content).trim(),
+      content: ((content.includes("@") && data.origin) ? content.replace(/@/g, data.origin) : content).trim(),
       comment: (comment || "").trim() || null,
     });
   }

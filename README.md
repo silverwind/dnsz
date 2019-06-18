@@ -26,11 +26,13 @@ dnsz.stringify(data);
 ```
 
 ## API
-### dnsz.parse
+### dnsz.parse(str, [opts])
 
 Parse a string of a DNS zone file to a `data` object.
 
-### dnsz.stringify
+- `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it.
+
+### dnsz.stringify(str)
 
 Create a string of a DNS zone file from a `data` object. If `origin` is specified, will
 replace it in `name` and `content` with `@`.
