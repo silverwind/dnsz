@@ -27,6 +27,10 @@ function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
+function isCommentLine(line) {
+  return line.startsWith(";; ") && line.length > 3;
+}
+
 function format(records, type, origin) {
   let str = `;; ${type} Records\n`;
 
@@ -66,7 +70,29 @@ function format(records, type, origin) {
 
 module.exports.parse = str => {
   const data = {records: []};
-  const lines = str.split(/\r?\n/).map(l => l.trim()).filter(l => Boolean(l) && !l.startsWith(";"));
+  const rawLines = str.split(/\r?\n/).map(l => l.trim());
+  const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
+
+  // search for header
+  const headerLines = [];
+  let valid;
+  for (const [index, line] of Object.entries(rawLines)) {
+    if (isCommentLine(line)) {
+      const headerLine = line.substring(3).trim();
+      if (headerLine) {
+        headerLines.push(headerLine);
+      }
+    } else {
+      const prev = rawLines[index - 1];
+      if (line === "" && index > 1 && isCommentLine(prev)) {
+        valid = true;
+        break;
+      }
+    }
+  }
+  if (valid && headerLines.length) {
+    data.header = headerLines.join("\n");
+  }
 
   // search for $ORIGIN
   let origin;
@@ -122,6 +148,10 @@ module.exports.stringify = data => {
   }
 
   let output = "";
+
+  if (data.header) {
+    output += data.header.split(/\r?\n/).filter(l => !!l).map(l => `;; ${l}`).join("\n").trim() + "\n\n";
+  }
 
   const vars = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);

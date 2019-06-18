@@ -46,6 +46,7 @@ replace it in `name` and `content` with `@`.
   - `comment`: A comment, e.g. `"a comment"`, `null` if absent.
 - `origin`: The value of `$ORIGIN` in the zone file.
 - `ttl`: The value of `$TTL` in the zone file.
+- `header`: A optional header at the start of the file. Does not include comment markers.
 
 ## License
 

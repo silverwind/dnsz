@@ -15,13 +15,13 @@ const main = async () => {
     const str = await fs.readFile(join(__dirname, "tests", "simple.txt"), "utf8");
     const parsed = m.parse(str);
     const roundtripped = m.stringify(parsed);
-    assert.deepEqual(str, roundtripped);
+    assert.deepEqual(roundtripped, str);
   }
   {
     const str = await fs.readFile(join(__dirname, "tests", "origin.txt"), "utf8");
     const parsed = m.parse(str);
     const roundtripped = m.stringify(parsed);
-    assert.deepEqual(str, roundtripped);
+    assert.deepEqual(roundtripped, str);
     assert(parsed.records.length === 5);
     for (const record of parsed.records) {
       assert(record.name);
@@ -54,6 +54,12 @@ const main = async () => {
     parsed.ttl = 60;
     const withTTL = m.stringify(parsed);
     assert(/^\$TTL\s[0-9]+$/m.test(withTTL));
+  }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "header.txt"), "utf8");
+    const parsed = m.parse(str);
+    const roundtripped = m.stringify(parsed);
+    assert.deepEqual(roundtripped, str);
   }
 };
 
