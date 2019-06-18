@@ -33,6 +33,9 @@ const main = async () => {
       assert(!record.name.includes("@"));
       assert(!record.content.includes("@"));
     }
+    parsed.origin = "testzone.com";
+    const withOrigin = m.stringify(parsed);
+    assert(/^\$ORIGIN\s.+$/m.test(withOrigin));
   }
   {
     const str = await fs.readFile(join(__dirname, "tests", "ttl.txt"), "utf8");
@@ -48,6 +51,9 @@ const main = async () => {
       assert(!record.name.includes("@"));
       assert(!record.content.includes("@"));
     }
+    parsed.ttl = 60;
+    const withTTL = m.stringify(parsed);
+    assert(/^\$TTL\s[0-9]+$/m.test(withTTL));
   }
 };
 

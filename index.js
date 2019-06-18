@@ -1,7 +1,7 @@
 "use strict";
 
 // TODO:
-//   - stringify: support $TTL and optional TTL column
+//   - both: optional TTL column
 //   - both: support parsing TTLs like 1D, 1W, 3h, 1w
 //   - both: support multiline value format
 
@@ -123,9 +123,10 @@ module.exports.stringify = data => {
 
   let output = "";
 
-  if (data.origin) {
-    output += `$ORIGIN ${denormalize(data.origin)}\n\n`;
-  }
+  const vars = [];
+  if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
+  if (data.ttl) vars.push(`$TTL ${data.ttl}`);
+  if (vars.length) output += vars.join("\n") + "\n\n";
 
   // output SOA first
   if (recordsByType.SOA) {
