@@ -1,4 +1,5 @@
 ;; This is a
+;;
 ;; header message
 
 $ORIGIN originzone.com.
@@ -9,8 +10,8 @@ $TTL 60
 
 ;; A Records
 @	60	IN	A	1.2.3.4	; a comment
-mx.@	60	IN	A	1.2.3.4	; another comment
+mx	60	IN	A	1.2.3.4	; another comment
 
 ;; AAAA Records
 @	60	IN	AAAA	2001:db8::1
-mx.@	120	IN	AAAA	2001:db8::1
+mx	120	IN	AAAA	2001:db8::1

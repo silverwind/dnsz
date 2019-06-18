@@ -32,14 +32,18 @@ Parse a string of a DNS zone file to a `data` object.
 
 - `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it.
 
-### dnsz.stringify(str)
+### dnsz.stringify(data)
 
-Create a string of a DNS zone file from a `data` object. If `origin` is specified, will
-replace it in `name` and `content` with `@`.
+Create a string of a DNS zone file from a `data` object. If `data.origin` is specified, the following things happen:
+
+- A `$ORIGIN` variable is added to the output.
+- All occurences of `data.origin` within `content` are replaced with `@`.
+- If `data.origin` matches the `name` of a `record`, `name` is replaced with `@`.
+- If `data.origin` is at the end of `name` of a record, will change to the substring excluding `data.origin` and without the trailing dot (indicating a subdomain).
 
 ### `data` object
 
-- `records`: Array of records with these props:
+- `records`: Array of `record` with these props:
   - `name`: The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
   - `ttl`: The TTL in seconds, e.g. `60`.
   - `class`: The DNS class, e.g. `"IN"`.
@@ -48,7 +52,7 @@ replace it in `name` and `content` with `@`.
   - `comment`: A comment, e.g. `"a comment"`, `null` if absent.
 - `origin`: The value of `$ORIGIN` in the zone file.
 - `ttl`: The value of `$TTL` in the zone file.
-- `header`: A optional header at the start of the file. Does not include comment markers.
+- `header`: A optional header at the start of the file. Can be multiline. Does not include comment markers.
 
 ## License
 

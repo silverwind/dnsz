@@ -27,26 +27,30 @@ function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
-function isCommentLine(line) {
-  return line.startsWith(";; ") && line.length > 3;
-}
-
 function format(records, type, origin) {
   let str = `;; ${type} Records\n`;
 
   for (const record of records) {
-    let name;
-    if (origin && (record.name || "").includes(origin)) {
-      const re = new RegExp(esc(origin + ".") + "?", "gm");
-      name = denormalize(record.name.replace(re, "@"));
+    let name = record.name || "";
+
+    if (origin) {
+      if (name === origin) {
+        name = "@";
+      } if (name.endsWith(origin)) {
+        // subdomain, remove origin and trailing dots
+        name = normalize(name.replace(new RegExp(esc(origin + ".") + "?$", "gm"), ""));
+      } else {
+        // assume it's a subdomain, remove trailing dots
+        name = normalize(name);
+      }
     } else {
-      name = denormalize(record.name);
+      // assume it's a fqdn, add trailing dots
+      name = denormalize(name);
     }
 
     let content;
     if (origin && (record.content || "").includes(origin)) {
-      const re = new RegExp(esc(origin + ".") + "?", "gm");
-      content = record.content.replace(re, "@");
+      content = record.content.replace(new RegExp(esc(origin + ".") + "?", "gm"), "@");
     } else {
       content = record.content;
     }
@@ -77,14 +81,11 @@ module.exports.parse = (str, {replaceOrigin} = {}) => {
   const headerLines = [];
   let valid;
   for (const [index, line] of Object.entries(rawLines)) {
-    if (isCommentLine(line)) {
-      const headerLine = line.substring(3).trim();
-      if (headerLine) {
-        headerLines.push(headerLine);
-      }
+    if (line.startsWith(";;")) {
+      headerLines.push(line.substring(2).trim());
     } else {
       const prev = rawLines[index - 1];
-      if (line === "" && index > 1 && isCommentLine(prev)) {
+      if (line === "" && index > 1 && prev.startsWith(";;")) {
         valid = true;
         break;
       }
@@ -152,7 +153,12 @@ module.exports.stringify = data => {
   let output = "";
 
   if (data.header) {
-    output += data.header.split(/\r?\n/).filter(l => !!l).map(l => `;; ${l}`).join("\n").trim() + "\n\n";
+    output += data.header
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .map(l => l ? `;; ${l}` : ";;")
+      .join("\n")
+      .trim() + "\n\n";
   }
 
   const vars = [];
@@ -160,14 +166,16 @@ module.exports.stringify = data => {
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += vars.join("\n") + "\n\n";
 
+  const origin = normalize(data.origin);
+
   // output SOA first
   if (recordsByType.SOA) {
-    output += format(recordsByType.SOA, "SOA", normalize(data.origin));
+    output += format(recordsByType.SOA, "SOA", origin);
     delete recordsByType.SOA;
   }
 
   for (const type of Object.keys(recordsByType).sort()) {
-    output += format(recordsByType[type], type, normalize(data.origin));
+    output += format(recordsByType[type], type, origin);
   }
 
   return `${output.trim()}\n`;

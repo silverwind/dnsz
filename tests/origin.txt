@@ -5,8 +5,8 @@ $ORIGIN originzone.com.
 
 ;; A Records
 @	60	IN	A	1.2.3.4	; a comment
-mx.@	60	IN	A	1.2.3.4	; another comment
+mx	60	IN	A	1.2.3.4	; another comment
 
 ;; AAAA Records
 @	120	IN	AAAA	2001:db8::1
-mx.@	120	IN	AAAA	2001:db8::1
+mx	120	IN	AAAA	2001:db8::1

@@ -66,9 +66,6 @@ const main = async () => {
     const replaceOrigin = "another.com";
     const parsed = m.parse(str, {replaceOrigin});
     assert.deepEqual(parsed.origin, replaceOrigin);
-    for (const record of parsed.records) {
-      assert(record.name.includes(replaceOrigin));
-    }
   }
 };
 
