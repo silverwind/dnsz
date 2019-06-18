@@ -23,28 +23,29 @@ const data = dnsz.parse("example.com 60 IN A 1.2.3.4");
 
 dnsz.stringify(data);
 // => ";; A Records\nexample.com.\t60\tIN\tA\t1.2.3.4\n"
-
 ```
 
 ## API
 ### dnsz.parse
 
-Parse a string of a DNS zone file to a object in the format `{records: []}`.
+Parse a string of a DNS zone file to a `data` object.
 
 ### dnsz.stringify
 
-Create a string of a DNS zone file from a object in the format `{records: []}`.
+Create a string of a DNS zone file from a `data` object. If `origin` is specified, will
+replace it in `name` and `content` with `@`.
 
-### `record`
+### `data` object
 
-A single record is represented as `{name, ttl, class, type, content}` where:
-
-- `name`: The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
-- `ttl`: The TTL in seconds, e.g. `60`.
-- `class`: The DNS class, e.g. `"IN"`.
-- `type`: The record type, e.g. `"A"`.
-- `content`: The record content, e.g. `"2001:db8::1"` or `"example.com."`.
-- `comment`: A comment for this record, e.g. `"a comment"`.
+- `records`: Array of records with these props:
+  - `name`: The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
+  - `ttl`: The TTL in seconds, e.g. `60`.
+  - `class`: The DNS class, e.g. `"IN"`.
+  - `type`: The record type, e.g. `"A"`.
+  - `content`: The record content, e.g. `"2001:db8::1"` or `"example.com."`.
+  - `comment`: A comment, e.g. `"a comment"`, `null` if absent.
+- `origin`: The value of `$ORIGIN` in the zone file.
+- `ttl`: The value of `$TTL` in the zone file.
 
 ## License
 

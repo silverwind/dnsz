@@ -1,0 +1,13 @@
+$ORIGIN originzone.com
+$TTL 60
+
+;; SOA Records
+@	IN	SOA	@ root.@ 2031242781 7200 3600 86400 3600
+
+;; A Records
+@	IN	A	1.2.3.4	; a comment
+mx.@	60	IN	A	1.2.3.4	; another comment
+
+;; AAAA Records
+@	IN	AAAA	2001:db8::1
+mx.@	120	IN	AAAA	2001:db8::1

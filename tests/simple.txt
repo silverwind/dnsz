@@ -10,11 +10,11 @@ testzone.com.	120	IN	AAAA	2001:db8::1
 mx.testzone.com.	120	IN	AAAA	2001:db8::1
 
 ;; CAA Records
-testzone.com.	120	IN	CAA	0 issue "letsencrypt.org"
+testzone.com.	120	IN	CAA	0 issue "testzone.com"
 
 ;; CNAME Records
-cname1.testzone.com.	120	IN	CNAME	example.com.
-cname2.testzone.com.	120	IN	CNAME	example.com.
+cname1.testzone.com.	120	IN	CNAME	testzone.com.
+cname2.testzone.com.	120	IN	CNAME	testzone.com.
 
 ;; MX Records
 testzone.com.	120	IN	MX	10 mx.testzone.com.
@@ -22,6 +22,6 @@ testzone.com.	120	IN	MX	10 mx3.testzone.com.
 testzone.com.	120	IN	MX	10 mx2.testzone.com.
 
 ;; TXT Records
-testzone.com.	120	IN	TXT	"third record"
-testzone.com.	120	IN	TXT	"second record"
 testzone.com.	120	IN	TXT	"first record"
+testzone.com.	120	IN	TXT	"second record"
+testzone.com.	120	IN	TXT	"third record"
