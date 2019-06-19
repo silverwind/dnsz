@@ -12,9 +12,9 @@
     "node": ">=10"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-silverwind": "^3.0.3",
-    "updates": "^8.1.0",
+    "eslint": "5.16.0",
+    "eslint-config-silverwind": "3.0.3",
+    "updates": "8.1.0",
     "ver": "5.0.1"
   },
   "files": [
