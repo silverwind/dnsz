@@ -1,6 +1,6 @@
 {
   "name": "dnsz",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Generic DNS zone file parser and stringifier",
   "author": "silverwind <me@silverwind.io>",
   "repository": "silverwind/dnsz",
