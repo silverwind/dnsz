@@ -1,7 +1,6 @@
 "use strict";
 
 // TODO:
-//   - both: optional TTL column
 //   - both: support parsing TTLs like 1D, 1W, 3h, 1w
 //   - both: support multiline value format
 
@@ -27,8 +26,8 @@ function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
-function format(records, type, origin) {
-  let str = `;; ${type} Records\n`;
+function format(records, type, origin, newline) {
+  let str = `;; ${type} Records${newline}`;
 
   for (const record of records) {
     let name = record.name || "";
@@ -60,15 +59,16 @@ function format(records, type, origin) {
       fields.push(`; ${record.comment}`);
     }
 
-    str += `${fields.join("\t")}\n`;
+    str += `${fields.join("\t")}${newline}`;
   }
-  return `${str}\n`;
+  return `${str}${newline}`;
 }
 
-module.exports.parse = (str, {replaceOrigin} = {}) => {
+module.exports.parse = (str, {replaceOrigin, windowsLineEndings} = {}) => {
   const data = {records: []};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
+  const newline = windowsLineEndings ? "\r\n" : "\n";
 
   // search for header
   const headerLines = [];
@@ -85,7 +85,7 @@ module.exports.parse = (str, {replaceOrigin} = {}) => {
     }
   }
   if (valid && headerLines.length) {
-    data.header = headerLines.join("\n");
+    data.header = headerLines.join(newline);
   }
 
   if (replaceOrigin) {
@@ -135,8 +135,9 @@ module.exports.parse = (str, {replaceOrigin} = {}) => {
   return data;
 };
 
-module.exports.stringify = data => {
+module.exports.stringify = (data, {windowsLineEndings} = {}) => {
   const recordsByType = {};
+  const newline = windowsLineEndings ? "\r\n" : "\n";
 
   for (const record of data.records) {
     if (!recordsByType[record.type]) recordsByType[record.type] = [];
@@ -150,26 +151,26 @@ module.exports.stringify = data => {
       .split(/\r?\n/)
       .map(l => l.trim())
       .map(l => l ? `;; ${l}` : ";;")
-      .join("\n")
-      .trim() + "\n\n";
+      .join(newline)
+      .trim() + `${newline}${newline}`;
   }
 
   const vars = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
-  if (vars.length) output += vars.join("\n") + "\n\n";
+  if (vars.length) output += vars.join(newline) + `${newline}${newline}`;
 
   const origin = normalize(data.origin);
 
   // output SOA first
   if (recordsByType.SOA) {
-    output += format(recordsByType.SOA, "SOA", origin);
+    output += format(recordsByType.SOA, "SOA", origin, newline);
     delete recordsByType.SOA;
   }
 
   for (const type of Object.keys(recordsByType).sort()) {
-    output += format(recordsByType[type], type, origin);
+    output += format(recordsByType[type], type, origin, newline);
   }
 
-  return `${output.trim()}\n`;
+  return `${output.trim()}${newline}`;
 };
