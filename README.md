@@ -31,13 +31,13 @@ dnsz.stringify(data);
 Parse a string of a DNS zone file and returns a `data` object.
 
 - `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it. Default: `false`.
-- `opts.windowsLineEndings`: When specified, emit `\r\n` instead of `\n` in `header`.
+- `opts.crlf`: When specified, emit `\r\n` instead of `\n` in `header`.
 
 ### dnsz.stringify(data, [opts])
 
 Parse a `data` object and return a string with the zone file contents.
 
-- `opts.windowsLineEndings`: When specified, emit `\r\n` instead of `\n` for the resulting zone file.
+- `opts.crlf`: When specified, emit `\r\n` instead of `\n` for the resulting zone file.
 
 If `data.origin` is specified, the following things happen:
 

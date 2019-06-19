@@ -64,11 +64,11 @@ function format(records, type, origin, newline) {
   return `${str}${newline}`;
 }
 
-module.exports.parse = (str, {replaceOrigin, windowsLineEndings} = {}) => {
+module.exports.parse = (str, {replaceOrigin, crlf} = {}) => {
   const data = {records: []};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
-  const newline = windowsLineEndings ? "\r\n" : "\n";
+  const newline = crlf ? "\r\n" : "\n";
 
   // search for header
   const headerLines = [];
@@ -135,9 +135,9 @@ module.exports.parse = (str, {replaceOrigin, windowsLineEndings} = {}) => {
   return data;
 };
 
-module.exports.stringify = (data, {windowsLineEndings} = {}) => {
+module.exports.stringify = (data, {crlf} = {}) => {
   const recordsByType = {};
-  const newline = windowsLineEndings ? "\r\n" : "\n";
+  const newline = crlf ? "\r\n" : "\n";
 
   for (const record of data.records) {
     if (!recordsByType[record.type]) recordsByType[record.type] = [];
