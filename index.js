@@ -48,19 +48,12 @@ function format(records, type, origin) {
       name = denormalize(name);
     }
 
-    let content;
-    if (origin && (record.content || "").includes(origin)) {
-      content = record.content.replace(new RegExp(esc(origin + ".") + "?", "gm"), "@");
-    } else {
-      content = record.content;
-    }
-
     const fields = [
       name,
       record.ttl,
       record.class,
       record.type,
-      content,
+      record.content,
     ];
 
     if (record.comment) {

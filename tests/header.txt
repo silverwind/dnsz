@@ -2,11 +2,11 @@
 ;;
 ;; header message
 
-$ORIGIN originzone.com.
+$ORIGIN headerzone.com.
 $TTL 60
 
 ;; SOA Records
-@	60	IN	SOA	@ root.@ 2031242781 7200 3600 86400 3600
+@	60	IN	SOA	headerzone.com root.headerzone.com 2031242781 7200 3600 86400 3600
 
 ;; A Records
 @	60	IN	A	1.2.3.4	; a comment
