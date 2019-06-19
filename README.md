@@ -5,7 +5,7 @@
 
 This module supports encoding arbitrary record types. It makes no effort to parse a record's content so is compatible with all current and future record types.
 
-The zone file output will be sorted by record type with a comment above each type section. Note that currently many features of zone files are unsupported (See the [TODOs](index.js)).
+Note that currently some advanced features of zone files are not unsupported (See the [TODOs](index.js)).
 
 ## Installation
 
@@ -31,13 +31,14 @@ dnsz.stringify(data);
 Parse a string of a DNS zone file and returns a `data` object.
 
 - `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it. Default: `false`.
-- `opts.crlf`: When specified, emit `\r\n` instead of `\n` in `header`.
+- `opts.crlf`: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
 
 ### dnsz.stringify(data, [opts])
 
 Parse a `data` object and return a string with the zone file contents.
 
-- `opts.crlf`: When specified, emit `\r\n` instead of `\n` for the resulting zone file.
+- `opts.sections`: Whether to group records into sections. Default: `true`.
+- `opts.crlf`: When `true`, emit `\r\n` instead of `\n` for the resulting zone file. Default: `false`.
 
 If `data.origin` is specified, the following things happen:
 

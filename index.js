@@ -4,6 +4,17 @@
 //   - both: support parsing TTLs like 1D, 1W, 3h, 1w
 //   - both: support multiline value format
 
+const defaults = {
+  parse: {
+    replaceOrigin: false,
+    crlf: false,
+  },
+  stringify: {
+    crlf: false,
+    sections: true,
+  },
+};
+
 const re = /^([a-z0-9_.-@]+)[\s]+([0-9]+)[\s]+([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
 const reWithoutTTL = /^([a-z0-9_.-@]+)[\s]+([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
 
@@ -26,8 +37,12 @@ function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
-function format(records, type, origin, newline) {
-  let str = `;; ${type} Records${newline}`;
+function format(records, type, {origin, newline, sections} = {}) {
+  let str = ``;
+
+  if (sections) {
+    str += `;; ${type} Records${newline}`;
+  }
 
   for (const record of records) {
     let name = record.name || "";
@@ -61,10 +76,10 @@ function format(records, type, origin, newline) {
 
     str += `${fields.join("\t")}${newline}`;
   }
-  return `${str}${newline}`;
+  return `${str}${sections ? newline : ""}`;
 }
 
-module.exports.parse = (str, {replaceOrigin, crlf} = {}) => {
+module.exports.parse = (str, {replaceOrigin, crlf} = defaults.parse) => {
   const data = {records: []};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -135,7 +150,7 @@ module.exports.parse = (str, {replaceOrigin, crlf} = {}) => {
   return data;
 };
 
-module.exports.stringify = (data, {crlf} = {}) => {
+module.exports.stringify = (data, {crlf, sections} = defaults.stringify) => {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
@@ -164,12 +179,12 @@ module.exports.stringify = (data, {crlf} = {}) => {
 
   // output SOA first
   if (recordsByType.SOA) {
-    output += format(recordsByType.SOA, "SOA", origin, newline);
+    output += format(recordsByType.SOA, "SOA", {origin, newline, sections});
     delete recordsByType.SOA;
   }
 
   for (const type of Object.keys(recordsByType).sort()) {
-    output += format(recordsByType[type], type, origin, newline);
+    output += format(recordsByType[type], type, {origin, newline, sections});
   }
 
   return `${output.trim()}${newline}`;

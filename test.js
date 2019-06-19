@@ -67,6 +67,12 @@ const main = async () => {
     const parsed = m.parse(str, {replaceOrigin});
     assert.deepEqual(parsed.origin, replaceOrigin);
   }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "nosections.txt"), "utf8");
+    const parsed = m.parse(str);
+    const roundtripped = m.stringify(parsed, {sections: false});
+    assert.deepEqual(roundtripped, str);
+  }
 };
 
 main().then(exit).catch(exit);
