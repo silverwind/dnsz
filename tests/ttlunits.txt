@@ -1,0 +1,13 @@
+$ORIGIN ttlzone.com
+$TTL 1h
+
+;; SOA Records
+@	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
+
+;; A Records
+@	2h	IN	A	1.2.3.4	; a comment
+mx	5M	IN	A	1.2.3.4	; another comment
+
+;; AAAA Records
+@	1W	IN	AAAA	2001:db8::1
+mx	2s	IN	AAAA	2001:db8::1
