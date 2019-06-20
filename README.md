@@ -64,15 +64,15 @@ If `data.origin` is specified, the following things happen in the zone file outp
 $ORIGIN originzone.com.
 
 ;; SOA Records
-@ 3600  IN  SOA originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+@   3600    IN  SOA originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
 
 ;; A Records
-@ 60  IN  A 1.2.3.4 ; a comment
-mx  60  IN  A 1.2.3.4 ; another comment
+@   60  IN  A   1.2.3.4 ; a comment
+mx  60  IN  A   1.2.3.4 ; another comment
 
 ;; AAAA Records
-@ 120 IN  AAAA  2001:db8::1
-mx  120 IN  AAAA  2001:db8::1
+@   120 IN  AAAA    2001:db8::1
+mx  120 IN  AAAA    2001:db8::1
 ```
 
 ### Example data object
