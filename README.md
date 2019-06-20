@@ -41,12 +41,11 @@ Parse a `data` object and return a string with the zone file contents.
 - `opts.sections`: Whether to group records into sections. Default: `true`.
 - `opts.crlf`: When `true`, emit `\r\n` instead of `\n` for the resulting zone file. Default: `false`.
 
-If `data.origin` is specified, the following things happen:
+If `data.origin` is specified, the following things happen in the zone file output:
 
-- A `$ORIGIN` variable is added to the output.
+- A `$ORIGIN` variable is added.
 - All occurences of `data.origin` within `content` are replaced with `@`.
 - If `data.origin` matches the `name` of a `record`, `name` is replaced with `@`.
-- If `data.origin` is at the end of `name` of a record, will change to the substring excluding `data.origin` and without the trailing dot (indicating a subdomain).
 
 ### `data` object
 
