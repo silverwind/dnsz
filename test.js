@@ -83,8 +83,23 @@ const main = async () => {
     const str = await fs.readFile(join(__dirname, "tests", "nottl.txt"), "utf8");
     const parsed = m.parse(str);
     for (const record of parsed.records) {
-      assert(typeof record.name === "string");
-      assert(typeof record.ttl === "number");
+      assert.equal(typeof record.name, "string");
+      assert.equal(typeof record.ttl, "number");
+      assert(record.class);
+      assert(record.type);
+      assert(record.content);
+    }
+  }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "ttlunits.txt"), "utf8");
+    const parsed = m.parse(str);
+    for (const record of parsed.records) {
+      if (record.type === "SOA") {
+        assert.equal(record.ttl, 3600);
+      }
+      assert.equal(typeof record.name, "string");
+      assert.equal(typeof record.ttl, "number");
+      assert(!Number.isNaN(record.ttl));
       assert(record.class);
       assert(record.type);
       assert(record.content);

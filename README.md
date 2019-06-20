@@ -3,9 +3,7 @@
 
 > Generic DNS zone file parser and stringifier
 
-This module supports encoding arbitrary record types. It makes no effort to parse a record's content so is compatible with all current and future record types.
-
-Note that currently some advanced features of zone files are not unsupported (See the [TODOs](index.js)).
+All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and zero dependencies.
 
 ## Installation
 

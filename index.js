@@ -1,7 +1,6 @@
 "use strict";
 
 // TODO:
-//   - both: support parsing TTLs like 1D, 1W, 3h, 1w
 //   - both: support multiline value format
 
 const defaults = {
@@ -16,7 +15,8 @@ const defaults = {
   },
 };
 
-const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
+const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
+const reTTL = /^[0-9]+[smhdw]?$/;
 
 function normalize(name) {
   name = (name || "").toLowerCase();
@@ -35,6 +35,32 @@ function denormalize(name) {
 
 function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
+}
+
+function parseTTL(ttl, def) {
+  if (typeof ttl === "number") {
+    return ttl;
+  }
+
+  if (def && !ttl) {
+    return def;
+  }
+
+  if (/s$/i.test(ttl)) {
+    ttl = parseInt(ttl);
+  } else if (/m$/i.test(ttl)) {
+    ttl = parseInt(ttl) * 60;
+  } else if (/h$/i.test(ttl)) {
+    ttl = parseInt(ttl) * 60 * 60;
+  } else if (/d$/i.test(ttl)) {
+    ttl = parseInt(ttl) * 60 * 60 * 24;
+  } else if (/w$/i.test(ttl)) {
+    ttl = parseInt(ttl) * 60 * 60 * 24 * 7;
+  } else {
+    ttl = parseInt(ttl);
+  }
+
+  return ttl;
 }
 
 function format(records, type, {origin, newline, sections} = {}) {
@@ -116,11 +142,9 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
   }
 
   // search for $TTL
-  let ttlVariable;
   for (const line of lines) {
     if (line.startsWith("$TTL ")) {
-      ttlVariable = Number(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
-      data.ttl = ttlVariable;
+      data.ttl = parseTTL(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
       break;
     }
   }
@@ -132,12 +156,12 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
     const match = re.exec(line) || [];
     if (match.length === 7) {
       [_, name, ttl, cls, type, content, comment] = match;
-      if (name && !ttl && /^[0-9]+$/.test(name)) {
+      if (name && !ttl && reTTL.test(name)) {
         ttl = name;
         name = undefined;
       }
     } else if (match.length === 6) {
-      if (/^[0-9]+$/.test(match[1])) { // no name
+      if (reTTL.test(match[1])) { // no name
         [_, ttl, cls, type, content, comment] = match;
       } else { // no ttl
         [_, name, cls, type, content, comment] = match;
@@ -146,23 +170,15 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
       [_, cls, type, content, comment] = match;
     }
 
-    if (ttl === undefined) {
-      if (ttlVariable !== undefined) {
-        ttl = ttlVariable;
-      } else {
-        ttl = defaultTTL;
-      }
-    }
-
-    if (typeof ttl !== "number") {
-      ttl = Number(ttl);
-    }
+    ttl = parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL);
 
     if (!name) {
       name = "";
     }
 
-    if (!cls || !type || !content) continue;
+    if (!cls || !type || !content) {
+      continue;
+    }
 
     data.records.push({
       name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
