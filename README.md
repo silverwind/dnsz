@@ -32,6 +32,7 @@ Parse a string of a DNS zone file and returns a `data` object.
 
 - `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it. Default: `false`.
 - `opts.crlf`: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
+- `opts.defaultTTL`: Default TTL when absent and `$TTL` is not present. Default: `60`;
 
 ### dnsz.stringify(data, [opts])
 

@@ -2,7 +2,7 @@ $ORIGIN ttlzone.com
 $TTL 60
 
 ;; SOA Records
-@	IN	SOA	ttlzone root.ttlzone 2031242781 7200 3600 86400 3600
+@	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
 
 ;; A Records
 @	IN	A	1.2.3.4	; a comment

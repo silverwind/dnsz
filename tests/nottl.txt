@@ -1,0 +1,7 @@
+;; SOA Records
+@	IN	SOA	nottlzone. root.notttlzone.com. 2031242781 7200 3600 86400 3600
+
+;; A Records
+60	IN	A	1.2.3.4	; no name
+mx	IN	A	1.2.3.4	; no ttl
+    IN	A	1.2.3.4	; no name and ttl

@@ -8,6 +8,7 @@ const defaults = {
   parse: {
     replaceOrigin: false,
     crlf: false,
+    defaultTTL: 60,
   },
   stringify: {
     crlf: false,
@@ -15,8 +16,7 @@ const defaults = {
   },
 };
 
-const re = /^([a-z0-9_.-@]+)[\s]+([0-9]+)[\s]+([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
-const reWithoutTTL = /^([a-z0-9_.-@]+)[\s]+([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
+const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
 
 function normalize(name) {
   name = (name || "").toLowerCase();
@@ -79,7 +79,7 @@ function format(records, type, {origin, newline, sections} = {}) {
   return `${str}${sections ? newline : ""}`;
 }
 
-module.exports.parse = (str, {replaceOrigin, crlf} = defaults.parse) => {
+module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse) => {
   const data = {records: []};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -119,7 +119,7 @@ module.exports.parse = (str, {replaceOrigin, crlf} = defaults.parse) => {
   let ttlVariable;
   for (const line of lines) {
     if (line.startsWith("$TTL ")) {
-      ttlVariable = normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length));
+      ttlVariable = Number(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
       data.ttl = ttlVariable;
       break;
     }
@@ -128,21 +128,48 @@ module.exports.parse = (str, {replaceOrigin, crlf} = defaults.parse) => {
   // create records
   for (const line of lines) {
     let _, name, ttl, cls, type, content, comment;
-    [_, name, ttl, cls, type, content, comment] = re.exec(line) || [];
 
-    if (!name && ttlVariable) {
-      [_, name, cls, type, content, comment] = reWithoutTTL.exec(line) || [];
-      ttl = ttlVariable;
+    const match = re.exec(line) || [];
+    if (match.length === 7) {
+      [_, name, ttl, cls, type, content, comment] = match;
+      if (name && !ttl && /^[0-9]+$/.test(name)) {
+        ttl = name;
+        name = undefined;
+      }
+    } else if (match.length === 6) {
+      if (/^[0-9]+$/.test(match[1])) { // no name
+        [_, ttl, cls, type, content, comment] = match;
+      } else { // no ttl
+        [_, name, cls, type, content, comment] = match;
+      }
+    } else if (match.length === 5) { // no name and ttl
+      [_, cls, type, content, comment] = match;
     }
 
-    if (!name) continue;
+    if (ttl === undefined) {
+      if (ttlVariable !== undefined) {
+        ttl = ttlVariable;
+      } else {
+        ttl = defaultTTL;
+      }
+    }
+
+    if (typeof ttl !== "number") {
+      ttl = Number(ttl);
+    }
+
+    if (!name) {
+      name = "";
+    }
+
+    if (!cls || !type || !content) continue;
 
     data.records.push({
-      name: normalize((name.includes("@") && data.origin) ? name.replace(/@/g, data.origin) : name),
-      ttl: Number(ttl),
+      name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
+      ttl,
       class: cls.toUpperCase(),
       type: type.toUpperCase(),
-      content: ((content.includes("@") && data.origin) ? content.replace(/@/g, data.origin) : content).trim(),
+      content: (content || "").trim(),
       comment: (comment || "").trim() || null,
     });
   }

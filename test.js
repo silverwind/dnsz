@@ -73,6 +73,23 @@ const main = async () => {
     const roundtripped = m.stringify(parsed, {sections: false});
     assert.deepEqual(roundtripped, str);
   }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "noname.txt"), "utf8");
+    const parsed = m.parse(str);
+    const roundtripped = m.stringify(parsed);
+    assert.deepEqual(roundtripped, str);
+  }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "nottl.txt"), "utf8");
+    const parsed = m.parse(str);
+    for (const record of parsed.records) {
+      assert(typeof record.name === "string");
+      assert(typeof record.ttl === "number");
+      assert(record.class);
+      assert(record.type);
+      assert(record.content);
+    }
+  }
 };
 
 main().then(exit).catch(exit);
