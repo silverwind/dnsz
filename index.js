@@ -106,7 +106,7 @@ function format(records, type, {origin, newline, sections} = {}) {
 }
 
 module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse) => {
-  const data = {records: []};
+  const data = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
@@ -150,6 +150,7 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
   }
 
   // create records
+  data.records = [];
   for (const line of lines) {
     let _, name, ttl, cls, type, content, comment;
 

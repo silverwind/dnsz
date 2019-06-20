@@ -3,7 +3,7 @@
 
 > Generic DNS zone file parser and stringifier
 
-All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and zero dependencies.
+All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and has zero dependencies.
 
 ## Installation
 
@@ -57,6 +57,73 @@ If `data.origin` is specified, the following things happen in the zone file outp
 - `origin`: The value of `$ORIGIN` in the zone file.
 - `ttl`: The value of `$TTL` in the zone file.
 - `header`: A optional header at the start of the file. Can be multiline. Does not include comment markers.
+
+### Example zone file
+
+``` ini
+$ORIGIN originzone.com.
+
+;; SOA Records
+@ 3600  IN  SOA originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+
+;; A Records
+@ 60  IN  A 1.2.3.4 ; a comment
+mx  60  IN  A 1.2.3.4 ; another comment
+
+;; AAAA Records
+@ 120 IN  AAAA  2001:db8::1
+mx  120 IN  AAAA  2001:db8::1
+```
+
+### Example data object
+
+``` json
+{
+  "origin": "originzone.com",
+  "records": [
+    {
+      "name": "originzone.com",
+      "ttl": 3600,
+      "class": "IN",
+      "type": "SOA",
+      "content": "originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600",
+      "comment": null
+    },
+    {
+      "name": "originzone.com",
+      "ttl": 60,
+      "class": "IN",
+      "type": "A",
+      "content": "1.2.3.4",
+      "comment": "a comment"
+    },
+    {
+      "name": "mx",
+      "ttl": 60,
+      "class": "IN",
+      "type": "A",
+      "content": "1.2.3.4",
+      "comment": "another comment"
+    },
+    {
+      "name": "originzone.com",
+      "ttl": 120,
+      "class": "IN",
+      "type": "AAAA",
+      "content": "2001:db8::1",
+      "comment": null
+    },
+    {
+      "name": "mx",
+      "ttl": 120,
+      "class": "IN",
+      "type": "AAAA",
+      "content": "2001:db8::1",
+      "comment": null
+    }
+  ]
+}
+````
 
 ## License
 
