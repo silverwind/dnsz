@@ -27,5 +27,8 @@
     "zone-file",
     "bind",
     "generic"
-  ]
+  ],
+  "dependencies": {
+    "split-string": "6.1.0"
+  }
 }

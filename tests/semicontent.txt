@@ -1,0 +1,6 @@
+;; SOA Records
+semicontent.com.	3600	IN	SOA	semicontent.com. root.semicontent.com. 2031242781 7200 3600 86400 3600	; soa record
+
+;; TXT Records
+@	3600	IN	TXT	"v=spf1 -all 2001::db8"	; txt record
+_dmarc	3600	IN	TXT	"v=DMARC1; p=reject; sp=reject; rua=mailto:admin@semicontent.com ruf=admin@semicontent.com"	; txt record

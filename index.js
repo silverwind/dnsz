@@ -3,6 +3,8 @@
 // TODO:
 //   - both: support multiline value format
 
+const splitString = require("split-string");
+
 const defaults = {
   parse: {
     replaceOrigin: false,
@@ -15,7 +17,7 @@ const defaults = {
   },
 };
 
-const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+([^;]+);?(.+)?$/i;
+const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+(.+)?$/i;
 const reTTL = /^[0-9]+[smhdw]?$/;
 
 function normalize(name) {
@@ -84,8 +86,12 @@ function format(records, type, {origin, newline, sections} = {}) {
         name = normalize(name);
       }
     } else {
-      // assume it's a fqdn, add trailing dots
-      name = denormalize(name);
+      if (name.includes(".")) {
+        // assume it's a fqdn, add trailing dots
+        name = denormalize(name);
+      } else {
+        name = normalize(name);
+      }
     }
 
     const fields = [
@@ -149,27 +155,42 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
     }
   }
 
+  function splitContentAndComment(str) {
+    if (!str) return [null, null];
+    const parts = splitString(str, {quotes: [`"`], separator: ";"}).map(part => (part || "").trim()).filter(part => !!part);
+
+    if (parts.length <= 2) {
+      return [parts[0] || null, parts[1] || null];
+    } else {
+      const comment = parts.pop();
+      const content = parts.join("; ");
+      return [content, comment];
+    }
+  }
+
   // create records
   data.records = [];
   for (const line of lines) {
-    let _, name, ttl, cls, type, content, comment;
+    let _, name, ttl, cls, type, contentAndComment;
 
     const match = re.exec(line) || [];
-    if (match.length === 7) {
-      [_, name, ttl, cls, type, content, comment] = match;
+    if (match.length === 6) {
+      [_, name, ttl, cls, type, contentAndComment] = match;
       if (name && !ttl && reTTL.test(name)) {
         ttl = name;
         name = undefined;
       }
-    } else if (match.length === 6) {
+    } else if (match.length === 5) {
       if (reTTL.test(match[1])) { // no name
-        [_, ttl, cls, type, content, comment] = match;
+        [_, ttl, cls, type, contentAndComment] = match;
       } else { // no ttl
-        [_, name, cls, type, content, comment] = match;
+        [_, name, cls, type, contentAndComment] = match;
       }
-    } else if (match.length === 5) { // no name and ttl
-      [_, cls, type, content, comment] = match;
+    } else if (match.length === 4) { // no name and ttl
+      [_, cls, type, contentAndComment] = match;
     }
+
+    const [content, comment] = splitContentAndComment(contentAndComment);
 
     ttl = parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL);
 

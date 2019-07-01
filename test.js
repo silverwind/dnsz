@@ -105,6 +105,12 @@ const main = async () => {
       assert(record.content);
     }
   }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "semicontent.txt"), "utf8");
+    const parsed = m.parse(str);
+    const roundtripped = m.stringify(parsed);
+    assert.deepEqual(roundtripped, str);
+  }
 };
 
 main().then(exit).catch(exit);
