@@ -219,9 +219,11 @@ module.exports.stringify = (data, {crlf, sections} = defaults.stringify) => {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
-  for (const record of data.records) {
-    if (!recordsByType[record.type]) recordsByType[record.type] = [];
-    recordsByType[record.type].push(record);
+  if (sections) {
+    for (const record of data.records) {
+      if (!recordsByType[record.type]) recordsByType[record.type] = [];
+      recordsByType[record.type].push(record);
+    }
   }
 
   let output = "";
@@ -242,14 +244,21 @@ module.exports.stringify = (data, {crlf, sections} = defaults.stringify) => {
 
   const origin = normalize(data.origin);
 
-  // output SOA first
-  if (recordsByType.SOA) {
-    output += format(recordsByType.SOA, "SOA", {origin, newline, sections});
-    delete recordsByType.SOA;
-  }
+  if (sections) {
+    if (recordsByType.SOA) {
+      output += format(recordsByType.SOA, "SOA", {origin, newline, sections});
+      delete recordsByType.SOA;
+    }
 
-  for (const type of Object.keys(recordsByType).sort()) {
-    output += format(recordsByType[type], type, {origin, newline, sections});
+    for (const type of Object.keys(recordsByType).sort()) {
+      output += format(recordsByType[type], type, {origin, newline, sections});
+    }
+  } else {
+    const recordsSOA = data.records.filter(r => r.type === "SOA");
+    const recordsMinusSOA = data.records.filter(r => r.type !== "SOA");
+
+    output += format(recordsSOA, null, {origin, newline, sections});
+    output += format(recordsMinusSOA, null, {origin, newline, sections});
   }
 
   return `${output.trim()}${newline}`;
