@@ -111,6 +111,12 @@ const main = async () => {
     const roundtripped = m.stringify(parsed);
     assert.deepEqual(roundtripped, str);
   }
+  {
+    const str = await fs.readFile(join(__dirname, "tests", "dash.txt"), "utf8");
+    const parsed = m.parse(str);
+    const roundtripped = m.stringify(parsed);
+    assert.deepEqual(roundtripped, str);
+  }
 };
 
 main().then(exit).catch(exit);

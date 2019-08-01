@@ -17,7 +17,7 @@ const defaults = {
   },
 };
 
-const re = /^([a-z0-9_.-@]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+(.+)?$/i;
+const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+(.+)?$/i;
 const reTTL = /^[0-9]+[smhdw]?$/;
 
 function normalize(name) {
