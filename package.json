@@ -11,6 +11,9 @@
   "engines": {
     "node": ">=10"
   },
+  "dependencies": {
+    "split-string": "6.1.0"
+  },
   "devDependencies": {
     "eslint": "6.1.0",
     "eslint-config-silverwind": "4.0.2",
@@ -27,8 +30,5 @@
     "zone-file",
     "bind",
     "generic"
-  ],
-  "dependencies": {
-    "split-string": "6.1.0"
-  }
+  ]
 }
