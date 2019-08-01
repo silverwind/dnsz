@@ -12,10 +12,10 @@
     "node": ">=10"
   },
   "devDependencies": {
-    "eslint": "6.0.1",
+    "eslint": "6.1.0",
     "eslint-config-silverwind": "4.0.2",
-    "updates": "8.2.0",
-    "ver": "5.0.2"
+    "updates": "8.5.1",
+    "ver": "5.1.2"
   },
   "files": [
     "index.js"
