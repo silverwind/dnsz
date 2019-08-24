@@ -41,12 +41,6 @@ Parse a `data` object and return a string with the zone file contents.
 - `opts.crlf`: When `true`, emit `\r\n` instead of `\n` for the resulting zone file. Default: `false`.
 - `opts.dots`: Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
 
-If `data.origin` is specified, the following things happen in the zone file output:
-
-- A `$ORIGIN` variable is added.
-- All occurences of `data.origin` within `content` are replaced with `@`.
-- If `data.origin` matches the `name` of a `record`, `name` is replaced with `@`.
-
 ### `data` object
 
 - `records`: Array of `record` with these props:
@@ -59,6 +53,12 @@ If `data.origin` is specified, the following things happen in the zone file outp
 - `origin`: The value of `$ORIGIN` in the zone file.
 - `ttl`: The value of `$TTL` in the zone file.
 - `header`: A optional header at the start of the file. Can be multiline. Does not include comment markers.
+
+If `data.origin` is specified, the following things happen in the zone file output:
+
+- A `$ORIGIN` variable is added.
+- All occurences of `data.origin` within `content` are replaced with `@`.
+- If `data.origin` matches the `name` of a `record`, `name` is replaced with `@`.
 
 ### Example zone file
 
