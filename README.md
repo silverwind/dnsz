@@ -30,7 +30,8 @@ Parse a string of a DNS zone file and returns a `data` object.
 
 - `opts.replaceOrigin`: When specified, replaces any `@` in `name` or `content` with it. Default: `false`.
 - `opts.crlf`: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
-- `opts.defaultTTL`: Default TTL when absent and `$TTL` is not present. Default: `60`;
+- `opts.defaultTTL`: Default TTL when absent and `$TTL` is not present. Default: `60`.
+- `opts.dots`: Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
 
 ### dnsz.stringify(data, [opts])
 
@@ -38,6 +39,7 @@ Parse a `data` object and return a string with the zone file contents.
 
 - `opts.sections`: Whether to group records into sections. Default: `true`.
 - `opts.crlf`: When `true`, emit `\r\n` instead of `\n` for the resulting zone file. Default: `false`.
+- `opts.dots`: Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
 
 If `data.origin` is specified, the following things happen in the zone file output:
 
@@ -123,7 +125,7 @@ mx  120 IN  AAAA    2001:db8::1
     }
   ]
 }
-````
+```
 
 ## License
 

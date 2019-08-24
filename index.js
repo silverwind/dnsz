@@ -1,7 +1,7 @@
 "use strict";
 
 // TODO:
-//   - both: support multiline value format
+//   - both: support mult}iline value format
 
 const splitString = require("split-string");
 
@@ -10,11 +10,33 @@ const defaults = {
     replaceOrigin: false,
     crlf: false,
     defaultTTL: 60,
+    dots: false,
   },
   stringify: {
     crlf: false,
     sections: true,
+    dots: false,
   },
+};
+
+// List of types and places where they have name-like content, used on the `dot` option.
+const nameLike = {
+  ALIAS: [0],
+  ANAME: [0],
+  CNAME: [0],
+  DNAME: [0],
+  MX: [1],
+  NAPTR: [5],
+  NS: [0],
+  NSEC: [0],
+  PTR: [0],
+  RP: [0, 1],
+  RRSIG: [7],
+  SIG: [7],
+  SOA: [0, 1],
+  SRV: [3],
+  TKEY: [0],
+  TSIG: [0],
 };
 
 const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+(.+)?$/i;
@@ -37,6 +59,16 @@ function denormalize(name) {
 
 function esc(str) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
+}
+
+function addDots(content, indexes) {
+  const parts = splitString(content, {quotes: [`"`], separator: " "}).map(s => s.trim()).filter(s => !!s);
+  for (const index of indexes) {
+    if (!parts[index].endsWith(".")) {
+      parts[index] += ".";
+    }
+  }
+  return parts.join(" ");
 }
 
 function parseTTL(ttl, def) {
@@ -65,7 +97,7 @@ function parseTTL(ttl, def) {
   return ttl;
 }
 
-function format(records, type, {origin, newline, sections} = {}) {
+function format(records, type, {origin, newline, sections, dots}) {
   let str = ``;
 
   if (sections) {
@@ -94,12 +126,17 @@ function format(records, type, {origin, newline, sections} = {}) {
       }
     }
 
+    let content = record.content;
+    if (dots && Object.keys(nameLike).includes(record.type)) {
+      content = addDots(content, nameLike[record.type]);
+    }
+
     const fields = [
       name,
       record.ttl,
       record.class,
       record.type,
-      record.content,
+      content,
     ];
 
     if (record.comment) {
@@ -111,7 +148,7 @@ function format(records, type, {origin, newline, sections} = {}) {
   return `${str}${sections ? newline : ""}`;
 }
 
-module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse) => {
+module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) => {
   const data = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -190,7 +227,7 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
       [_, cls, type, contentAndComment] = match;
     }
 
-    const [content, comment] = splitContentAndComment(contentAndComment);
+    let [content, comment] = splitContentAndComment(contentAndComment);
 
     ttl = parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL);
 
@@ -202,12 +239,18 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
       continue;
     }
 
+    type = type.toUpperCase();
+    content = (content || "").trim();
+    if (dots && Object.keys(nameLike).includes(type)) {
+      content = addDots(content, nameLike[type]);
+    }
+
     data.records.push({
       name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
       ttl,
       class: cls.toUpperCase(),
-      type: type.toUpperCase(),
-      content: (content || "").trim(),
+      type,
+      content,
       comment: (comment || "").trim() || null,
     });
   }
@@ -215,7 +258,7 @@ module.exports.parse = (str, {replaceOrigin, crlf, defaultTTL} = defaults.parse)
   return data;
 };
 
-module.exports.stringify = (data, {crlf, sections} = defaults.stringify) => {
+module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) => {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
@@ -246,19 +289,19 @@ module.exports.stringify = (data, {crlf, sections} = defaults.stringify) => {
 
   if (sections) {
     if (recordsByType.SOA) {
-      output += format(recordsByType.SOA, "SOA", {origin, newline, sections});
+      output += format(recordsByType.SOA, "SOA", {origin, newline, sections, dots});
       delete recordsByType.SOA;
     }
 
     for (const type of Object.keys(recordsByType).sort()) {
-      output += format(recordsByType[type], type, {origin, newline, sections});
+      output += format(recordsByType[type], type, {origin, newline, sections, dots});
     }
   } else {
     const recordsSOA = data.records.filter(r => r.type === "SOA");
     const recordsMinusSOA = data.records.filter(r => r.type !== "SOA");
 
-    output += format(recordsSOA, null, {origin, newline, sections});
-    output += format(recordsMinusSOA, null, {origin, newline, sections});
+    output += format(recordsSOA, null, {origin, newline, sections, dots});
+    output += format(recordsMinusSOA, null, {origin, newline, sections, dots});
   }
 
   return `${output.trim()}${newline}`;

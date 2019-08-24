@@ -123,6 +123,16 @@ const main = async () => {
     const roundtripped = m.stringify(parsed);
     assert.deepEqual(roundtripped, str);
   }
+  {
+    const dotsstr = await fs.readFile(join(__dirname, "tests", "dots.txt"), "utf8");
+    const nodotsstr = await fs.readFile(join(__dirname, "tests", "nodots.txt"), "utf8");
+    assert.deepEqual(m.stringify(m.parse(dotsstr, {dots: false}), {dots: false}), dotsstr);
+    assert.deepEqual(m.stringify(m.parse(dotsstr, {dots: false}), {dots: true}), dotsstr);
+    assert.deepEqual(m.stringify(m.parse(dotsstr, {dots: true}), {dots: true}), dotsstr);
+    assert.deepEqual(m.stringify(m.parse(nodotsstr, {dots: false}), {dots: false}), nodotsstr);
+    assert.deepEqual(m.stringify(m.parse(nodotsstr, {dots: false}), {dots: true}), dotsstr);
+    assert.deepEqual(m.stringify(m.parse(nodotsstr, {dots: true}), {dots: true}), dotsstr);
+  }
 };
 
 main().then(exit).catch(exit);

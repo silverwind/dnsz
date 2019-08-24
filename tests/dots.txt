@@ -1,0 +1,9 @@
+;; SOA Records
+dot-zone.net.	3600	IN	SOA	dot-zone.net. root.dot-zone.net. 2031242781 7200 3600 86400 3600
+
+;; A Records
+a.dot-zone.net.	120	IN	A	1.2.3.4
+
+;; CNAME Records
+cname1.dot-zone.net.	120	IN	CNAME	dot-zone.net.
+cname2.dot-zone.net.	120	IN	CNAME	dot-zone.net.
