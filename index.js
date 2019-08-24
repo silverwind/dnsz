@@ -7,7 +7,7 @@ const splitString = require("split-string");
 
 const defaults = {
   parse: {
-    replaceOrigin: false,
+    replaceOrigin: null,
     crlf: false,
     defaultTTL: 60,
     dots: false,
