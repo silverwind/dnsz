@@ -194,7 +194,16 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
 
   function splitContentAndComment(str) {
     if (!str) return [null, null];
-    const parts = splitString(str, {quotes: [`"`], separator: ";"}).map(part => (part || "").trim()).filter(part => !!part);
+    const splitted = splitString(str, {quotes: [`"`], separator: ";"});
+
+    let parts;
+    if (splitted.length > 2) { // more than one semicolon
+      parts = [splitted[0], splitted.slice(1).join(";")];
+    } else {
+      parts = splitted;
+    }
+
+    parts = parts.map(part => (part || "").trim()).filter(part => !!part);
 
     if (parts.length <= 2) {
       return [parts[0] || null, parts[1] || null];
