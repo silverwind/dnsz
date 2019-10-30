@@ -105,7 +105,7 @@ function format(records, type, {origin, newline, sections, dots}) {
   }
 
   for (const record of records) {
-    let name = record.name || "";
+    let name = normalize(record.name || "");
 
     if (origin) {
       if (name === origin) {
