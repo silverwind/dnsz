@@ -27,8 +27,13 @@
     "dns",
     "dnsz",
     "zone",
+    "zonefile",
     "zone-file",
+    "dns zonefile",
+    "dns-zone-file",
     "bind",
-    "generic"
+    "generic",
+    "domain",
+    "rfc"
   ]
 }
