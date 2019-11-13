@@ -1,7 +1,7 @@
 "use strict";
 
 // TODO:
-//   - both: support mult}iline value format
+//   - both: support multiline value format
 
 const splitString = require("split-string");
 
