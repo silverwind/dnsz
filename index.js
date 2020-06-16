@@ -110,9 +110,9 @@ function format(records, type, {origin, newline, sections, dots}) {
     if (origin) {
       if (name === origin) {
         name = "@";
-      } if (name.endsWith(origin)) {
+      } else if (name.endsWith(origin)) {
         // subdomain, remove origin and trailing dots
-        name = normalize(name.replace(new RegExp(esc(origin + ".") + "?$", "gm"), ""));
+        name = normalize(name.replace(new RegExp(`${esc(`${origin}.`)}?$`, "gm"), ""));
       } else {
         // assume it's a subdomain, remove trailing dots
         name = normalize(name);
@@ -146,6 +146,28 @@ function format(records, type, {origin, newline, sections, dots}) {
     str += `${fields.join("\t")}${newline}`;
   }
   return `${str}${sections ? newline : ""}`;
+}
+
+function splitContentAndComment(str) {
+  if (!str) return [null, null];
+  const splitted = splitString(str, {quotes: [`"`], separator: ";"});
+
+  let parts;
+  if (splitted.length > 2) { // more than one semicolon
+    parts = [splitted[0], splitted.slice(1).join(";")];
+  } else {
+    parts = splitted;
+  }
+
+  parts = parts.map(part => (part || "").trim()).filter(part => !!part);
+
+  if (parts.length <= 2) {
+    return [parts[0] || null, parts[1] || null];
+  } else {
+    const comment = parts.pop();
+    const content = parts.join("; ");
+    return [content, comment];
+  }
 }
 
 module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) => {
@@ -189,28 +211,6 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
     if (line.startsWith("$TTL ")) {
       data.ttl = parseTTL(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
       break;
-    }
-  }
-
-  function splitContentAndComment(str) {
-    if (!str) return [null, null];
-    const splitted = splitString(str, {quotes: [`"`], separator: ";"});
-
-    let parts;
-    if (splitted.length > 2) { // more than one semicolon
-      parts = [splitted[0], splitted.slice(1).join(";")];
-    } else {
-      parts = splitted;
-    }
-
-    parts = parts.map(part => (part || "").trim()).filter(part => !!part);
-
-    if (parts.length <= 2) {
-      return [parts[0] || null, parts[1] || null];
-    } else {
-      const comment = parts.pop();
-      const content = parts.join("; ");
-      return [content, comment];
     }
   }
 
@@ -281,18 +281,18 @@ module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = de
   let output = "";
 
   if (data.header) {
-    output += data.header
+    output += `${data.header
       .split(/\r?\n/)
       .map(l => l.trim())
       .map(l => l ? `;; ${l}` : ";;")
       .join(newline)
-      .trim() + `${newline}${newline}`;
+      .trim()}${newline}${newline}`;
   }
 
   const vars = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
-  if (vars.length) output += vars.join(newline) + `${newline}${newline}`;
+  if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
 
   const origin = normalize(data.origin);
 

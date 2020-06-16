@@ -15,10 +15,11 @@
     "split-string": "6.1.0"
   },
   "devDependencies": {
-    "eslint": "6.6.0",
-    "eslint-config-silverwind": "5.0.0",
-    "updates": "9.1.0",
-    "versions": "7.0.2"
+    "eslint": "7.2.0",
+    "eslint-config-silverwind": "13.4.6",
+    "jest": "26.0.1",
+    "updates": "10.2.13",
+    "versions": "8.4.0"
   },
   "files": [
     "index.js"
@@ -35,5 +36,8 @@
     "generic",
     "domain",
     "rfc"
-  ]
+  ],
+  "jest": {
+    "verbose": false
+  }
 }

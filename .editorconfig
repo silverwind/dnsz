@@ -13,8 +13,5 @@ insert_final_newline = true
 indent_size = 4
 indent_style = tab
 
-[LICENSE]
-indent_size = none
-
 [Makefile]
 indent_style = tab
