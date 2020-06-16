@@ -5,14 +5,14 @@ const {readFile} = require("fs").promises;
 const {resolve} = require("path");
 
 test("roundtrip", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "simple.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/simple.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("basic", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "origin.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/origin.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
@@ -61,7 +61,7 @@ test("origin", async () => {
 });
 
 test("ttl", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "ttl.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/ttl.txt"), "utf8");
   const parsed = parse(str);
   expect(parsed.records.length).toEqual(5);
   for (const record of parsed.records) {
@@ -80,35 +80,35 @@ test("ttl", async () => {
 });
 
 test("header", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "header.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/header.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("replaceOrigin", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "origin.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/origin.txt"), "utf8");
   const replaceOrigin = "another.com";
   const parsed = parse(str, {replaceOrigin});
   expect(parsed.origin).toEqual(replaceOrigin);
 });
 
 test("nosections", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "nosections.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/nosections.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed, {sections: false});
   expect(roundtripped).toEqual(str);
 });
 
 test("noname", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "noname.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/noname.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("nottl", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "nottl.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/nottl.txt"), "utf8");
   const parsed = parse(str);
   for (const record of parsed.records) {
     expect(typeof record.name).toEqual("string");
@@ -120,7 +120,7 @@ test("nottl", async () => {
 });
 
 test("ttlunits", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "ttlunits.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/ttlunits.txt"), "utf8");
   const parsed = parse(str);
   for (const record of parsed.records) {
     if (record.type === "SOA") {
@@ -136,29 +136,29 @@ test("ttlunits", async () => {
 });
 
 test("semicontent", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "semicontent.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/semicontent.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("dash", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "dash.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/dash.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("wildcard", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "wildcard.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/wildcard.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
 
 test("dots", async () => {
-  const dotsstr = await readFile(resolve(__dirname, "tests", "dots.txt"), "utf8");
-  const nodotsstr = await readFile(resolve(__dirname, "tests", "nodots.txt"), "utf8");
+  const dotsstr = await readFile(resolve(__dirname, "fixtures/dots.txt"), "utf8");
+  const nodotsstr = await readFile(resolve(__dirname, "fixtures/nodots.txt"), "utf8");
   expect(stringify(parse(dotsstr, {dots: false}), {dots: false})).toEqual(dotsstr);
   expect(stringify(parse(dotsstr, {dots: false}), {dots: true})).toEqual(dotsstr);
   expect(stringify(parse(dotsstr, {dots: true}), {dots: true})).toEqual(dotsstr);
@@ -168,7 +168,7 @@ test("dots", async () => {
 });
 
 test("comments", async () => {
-  const str = await readFile(resolve(__dirname, "tests", "comments.txt"), "utf8");
+  const str = await readFile(resolve(__dirname, "fixtures/comments.txt"), "utf8");
   const parsed = parse(str);
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
