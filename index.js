@@ -2,6 +2,8 @@
 
 // TODO:
 //   - both: support multiline value format
+//   - parse: support multiple $ORIGIN and $TTL in same file (should apply to all records beneath)
+//   - https://arstechnica.com/gadgets/2020/08/understanding-dns-anatomy-of-a-bind-zone-file/
 
 const splitString = require("split-string");
 
