@@ -173,3 +173,10 @@ test("comments", async () => {
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
+
+test("soa parens", async () => {
+  const str = await readFile(resolve(__dirname, "fixtures/soaparens.txt"), "utf8");
+  const parsed = parse(str);
+  const roundtripped = stringify(parsed);
+  expect(roundtripped).toEqual(str);
+});

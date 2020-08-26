@@ -1,9 +1,7 @@
 "use strict";
 
 // TODO:
-//   - both: support multiline value format
-//   - parse: support multiple $ORIGIN and $TTL in same file (should apply to all records beneath)
-//   - https://arstechnica.com/gadgets/2020/08/understanding-dns-anatomy-of-a-bind-zone-file/
+//   - both: support multiline value format (e.g. SOA)
 
 const splitString = require("split-string");
 
@@ -196,30 +194,18 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
     data.header = headerLines.join(newline);
   }
 
-  if (replaceOrigin) {
-    data.origin = replaceOrigin;
-  } else {
-    // search for $ORIGIN
-    for (const line of lines) {
-      if (line.startsWith("$ORIGIN ")) {
-        data.origin = normalize(line.replace(/;.+/, "").trim().substring("$ORIGIN ".length));
-        break;
-      }
-    }
-  }
-
-  // search for $TTL
-  for (const line of lines) {
-    if (line.startsWith("$TTL ")) {
-      data.ttl = parseTTL(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
-      break;
-    }
-  }
-
   // create records
   data.records = [];
   for (const line of lines) {
     let _, name, ttl, cls, type, contentAndComment;
+
+    if (line.startsWith("$ORIGIN ") && !data.origin) {
+      data.origin = normalize(line.replace(/;.+/, "").trim().substring("$ORIGIN ".length));
+    }
+
+    if (line.startsWith("$TTL ") && !data.ttl) {
+      data.ttl = parseTTL(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
+    }
 
     const match = re.exec(line) || [];
     if (match.length === 6) {
@@ -264,6 +250,10 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
       content,
       comment: (comment || "").trim() || null,
     });
+  }
+
+  if (replaceOrigin) {
+    data.origin = replaceOrigin;
   }
 
   return data;
