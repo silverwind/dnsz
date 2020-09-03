@@ -199,12 +199,14 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
   for (const line of lines) {
     let _, name, ttl, cls, type, contentAndComment;
 
-    if (line.startsWith("$ORIGIN ") && !data.origin) {
-      data.origin = normalize(line.replace(/;.+/, "").trim().substring("$ORIGIN ".length));
+    const parsedOrigin = (/\$ORIGIN\s+([^\s]+)/.exec(line) || [])[1];
+    if (parsedOrigin && !data.origin) {
+      data.origin = normalize(parsedOrigin);
     }
 
+    const parsedTtl = (/\$TTL\s+([^\s]+)/.exec(line) || [])[1];
     if (line.startsWith("$TTL ") && !data.ttl) {
-      data.ttl = parseTTL(normalize(line.replace(/;.+/, "").trim().substring("$TTL ".length)));
+      data.ttl = parseTTL(normalize(parsedTtl));
     }
 
     const match = re.exec(line) || [];
