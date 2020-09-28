@@ -3,6 +3,39 @@
 // TODO:
 //   - both: support multiline value format (e.g. SOA)
 
+/**
+ * @typedef {object} DnsRecord
+ * @property {string} name The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
+ * @property {number} ttl The TTL in seconds, e.g. `60`.
+ * @property {string} class The DNS class, e.g. `"IN"`.
+ * @property {string} type The record type, e.g. `"A"`.
+ * @property {string} content The record content, e.g. `"2001:db8::1"` or `"example.com."`.
+ * @property {string | null} comment A comment, e.g. `"a comment"`, `null` if absent.
+ */
+
+/**
+ * @typedef {object} DnsData
+ * @property {DnsRecord[]} records Array of `record`
+ * @property {string} [origin] The value of `$ORIGIN` in the zone file.
+ * @property {number} [ttl] The value of `$TTL` in the zone file.
+ * @property {string} [header] An optional header at the start of the file. Can be multiline. Does not include comment markers.
+ */
+
+/**
+ * @typedef {object} ParseOptions
+ * @property {string | null} [replaceOrigin=null] When specified, replaces any `@` in `name` or `content` with it.
+ * @property {boolean} [crlf=false] When true, emit `\r\n` instead of `\n` in `header`.
+ * @property {number} [defaultTTL=60] Default TTL when absent and `$TTL` is not present.
+ * @property {boolean} [dots=false] Ensure trailing dots on FQDNs in content. Supports a limited amount of record types.
+ */
+
+/**
+ * @typedef {object} StringifyOptions
+ * @property {boolean} [sections=true] Whether to group records into sections.
+ * @property {boolean} [crlf=false] When `true`, emit `\r\n` instead of `\n` for the resulting zone file.
+ * @property {boolean} [dots=false] Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
+ */
+
 const splitString = require("split-string");
 
 const defaults = {
@@ -170,7 +203,13 @@ function splitContentAndComment(str) {
   }
 }
 
-module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) => {
+/**
+ * Parse a string of a DNS zone file and returns a `data` object.
+ * @param {string} str The string of DNS zone file
+ * @param {ParseOptions} [opts={}] Parse options
+ * @returns {DnsData} The `data` object
+ */
+const parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) => {
   const data = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -261,7 +300,13 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
   return data;
 };
 
-module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) => {
+/**
+ * Parse a `data` object and return a string with the zone file contents.
+ * @param {DnsData} data The `data` object.
+ * @param {StringifyOptions} [opts={}] Parse options
+ * @returns {string} The string with the zone file contents.
+ */
+const stringify = (data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) => {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
@@ -309,3 +354,6 @@ module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = de
 
   return `${output.trim()}${newline}`;
 };
+
+module.exports.parse = parse;
+module.exports.stringify = stringify;

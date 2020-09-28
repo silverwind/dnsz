@@ -1,7 +1,13 @@
 lint:
 	yarn -s run eslint --color .
 
-test: lint
+build-typings:
+	yarn -s run tsc index.js --allowJs --declaration --emitDeclarationOnly
+
+test-typings: build-typings
+	yarn -s run tsc test.js --allowJs --checkJs --noEmit
+
+test: lint test-typings
 	yarn -s run jest --color
 
 unittest:
