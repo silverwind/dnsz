@@ -52,7 +52,7 @@ Parse a `data` object and return a string with the zone file contents.
   - `comment`: A comment, e.g. `"a comment"`, `null` if absent.
 - `origin`: The value of `$ORIGIN` in the zone file.
 - `ttl`: The value of `$TTL` in the zone file.
-- `header`: A optional header at the start of the file. Can be multiline. Does not include comment markers.
+- `header`: An optional header at the start of the file. Can be multiline. Does not include comment markers.
 
 If `data.origin` is specified, the following things happen in the zone file output:
 

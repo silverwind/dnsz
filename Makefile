@@ -3,6 +3,7 @@ lint:
 
 test: lint
 	yarn -s run jest --color
+	yarn -s run tsc test.js --allowJs --checkJs --noEmit
 
 unittest:
 	yarn -s run jest --watchAll

@@ -15,14 +15,17 @@
     "split-string": "6.1.0"
   },
   "devDependencies": {
+    "@types/jest": "26.0.14",
     "eslint": "7.11.0",
     "eslint-config-silverwind": "21.0.0",
     "jest": "26.5.3",
+    "typescript": "3.9.7",
     "updates": "11.2.5",
     "versions": "8.4.3"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "keywords": [
     "dns",
