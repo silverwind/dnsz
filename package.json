@@ -6,7 +6,6 @@
   "repository": "silverwind/dnsz",
   "license": "BSD-2-Clause",
   "scripts": {
-    "build": "make build-typings",
     "test": "make test"
   },
   "engines": {
