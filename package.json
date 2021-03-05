@@ -15,13 +15,13 @@
     "split-string": "6.1.0"
   },
   "devDependencies": {
-    "@types/jest": "26.0.14",
-    "eslint": "7.11.0",
-    "eslint-config-silverwind": "21.0.1",
-    "jest": "26.5.3",
-    "typescript": "4.0.3",
-    "updates": "11.2.5",
-    "versions": "8.4.3"
+    "@types/jest": "26.0.20",
+    "eslint": "7.21.0",
+    "eslint-config-silverwind": "29.0.0",
+    "jest": "26.6.3",
+    "typescript": "4.2.3",
+    "updates": "11.4.3",
+    "versions": "8.4.5"
   },
   "files": [
     "index.js",
