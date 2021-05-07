@@ -8,13 +8,13 @@ All current and future record types are supported as the module makes no effort 
 ## Installation
 
 ```
-$ npm i dnsz
+npm i dnsz
 ```
 
 ## Example
 
 ```js
-const dnsz = require("dnsz");
+import dnsz from "dnsz";
 
 const data = dnsz.parse("example.com 60 IN A 1.2.3.4");
 // => {records: [{name: "example.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4"}]}

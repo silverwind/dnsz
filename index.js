@@ -1,9 +1,7 @@
-"use strict";
+import splitString from "split-string";
 
 // TODO:
 //   - both: support multiline value format (e.g. SOA)
-
-const splitString = require("split-string");
 
 const defaults = {
   parse: {
@@ -170,7 +168,7 @@ function splitContentAndComment(str) {
   }
 }
 
-module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) => {
+export function parse(str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) {
   const data = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -259,9 +257,9 @@ module.exports.parse = (str, {replaceOrigin = defaults.parse.replaceOrigin, crlf
   }
 
   return data;
-};
+}
 
-module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) => {
+export function stringify(data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
@@ -308,4 +306,4 @@ module.exports.stringify = (data, {crlf = defaults.stringify.crlf, sections = de
   }
 
   return `${output.trim()}${newline}`;
-};
+}
