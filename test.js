@@ -181,3 +181,10 @@ test("soa parens", async () => {
   const roundtripped = stringify(parsed);
   expect(roundtripped).toEqual(str);
 });
+
+test("type65534", async () => {
+  const str = await readFileSync(resolve(__dirname, "fixtures/type65534.txt"), "utf8");
+  const parsed = parse(str);
+  const roundtripped = stringify(parsed);
+  expect(roundtripped).toEqual(str);
+});

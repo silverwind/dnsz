@@ -37,7 +37,7 @@ const nameLike = {
   TSIG: [0],
 };
 
-const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z]+)[\s]+([a-z]+)[\s]+(.+)?$/i;
+const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z0-9]+)[\s]+([a-z0-9]+)[\s]+(.+)?$/i;
 const reTTL = /^[0-9]+[smhdw]?$/;
 
 function normalize(name) {
