@@ -1,9 +1,16 @@
-import {parse, stringify} from "./index.js";
+import dnsz, {parse, stringify} from "./index.js";
 import {readFileSync} from "fs";
 import {resolve, dirname} from "path";
 import {fileURLToPath} from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+test("exports", () => {
+  expect(typeof dnsz.parse).toEqual("function");
+  expect(typeof dnsz.stringify).toEqual("function");
+  expect(typeof parse).toEqual("function");
+  expect(typeof stringify).toEqual("function");
+});
 
 test("roundtrip", async () => {
   const str = await readFileSync(resolve(__dirname, "fixtures/simple.txt"), "utf8");

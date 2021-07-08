@@ -9,7 +9,7 @@ lint: node_modules
 
 test: node_modules lint
 	NODE_OPTIONS="--experimental-vm-modules --no-warnings" yarn -s run jest --color
-	yarn -s run tsc test.js --allowJs --checkJs --noEmit --module es2020 --moduleResolution node
+	yarn -s run tsc test.js --allowJs --checkJs --noEmit --module es2020 --moduleResolution node --allowSyntheticDefaultImports
 
 unittest: node_modules
 	NODE_OPTIONS="--experimental-vm-modules --no-warnings" yarn -s run jest --watchAll

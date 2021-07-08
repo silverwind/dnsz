@@ -307,3 +307,5 @@ export function stringify(data, {crlf = defaults.stringify.crlf, sections = defa
 
   return `${output.trim()}${newline}`;
 }
+
+export default {parse, stringify};
