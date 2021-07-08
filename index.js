@@ -60,7 +60,11 @@ function esc(str) {
 }
 
 function addDots(content, indexes) {
-  const parts = splitString(content, {quotes: [`"`], separator: " "}).map(s => s.trim()).filter(s => !!s);
+  const parts = splitString(content, {
+    quotes: [`"`],
+    separator: " ",
+    keep: () => true, // keep backslashes
+  }).map(s => s.trim()).filter(s => !!s);
   for (const index of indexes) {
     if (!parts[index].endsWith(".")) {
       parts[index] += ".";
@@ -148,7 +152,11 @@ function format(records, type, {origin, newline, sections, dots}) {
 
 function splitContentAndComment(str) {
   if (!str) return [null, null];
-  const splitted = splitString(str, {quotes: [`"`], separator: ";"});
+  const splitted = splitString(str, {
+    quotes: [`"`],
+    separator: ";",
+    keep: () => true,
+  });
 
   let parts;
   if (splitted.length > 2) { // more than one semicolon
