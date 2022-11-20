@@ -64,7 +64,7 @@ function addDots(content, indexes) {
     quotes: [`"`],
     separator: " ",
     keep: () => true, // keep backslashes
-  }).map(s => s.trim()).filter(s => !!s);
+  }).map(s => s.trim()).filter(Boolean);
   for (const index of indexes) {
     if (!parts[index].endsWith(".")) {
       parts[index] += ".";
@@ -165,7 +165,7 @@ function splitContentAndComment(str) {
     parts = splitted;
   }
 
-  parts = parts.map(part => (part || "").trim()).filter(part => !!part);
+  parts = parts.map(part => (part || "").trim()).filter(Boolean);
 
   if (parts.length <= 2) {
     return [parts[0] || null, parts[1] || null];
