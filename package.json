@@ -8,13 +8,12 @@
   "type": "module",
   "exports": "./index.js",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "dependencies": {
     "split-string": "6.1.0"
   },
   "devDependencies": {
-    "@types/jest": "26.0.23",
     "eslint": "7.25.0",
     "eslint-config-silverwind": "32.3.4",
     "typescript": "4.2.4",

@@ -5,26 +5,23 @@
 
 All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and has minimal dependencies.
 
-## Installation
+## Usage
 
-```
+```bash
 npm i dnsz
 ```
-
-## Example
-
 ```js
-import dnsz from "dnsz";
+import {parseZone, stringifyZone} from "dnsz";
 
-const data = dnsz.parse("example.com 60 IN A 1.2.3.4");
+const data = parseZone("example.com 60 IN A 1.2.3.4");
 // => {records: [{name: "example.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4"}]}
 
-dnsz.stringify(data);
+stringifyZone(data);
 // => ";; A Records\nexample.com.\t60\tIN\tA\t1.2.3.4\n"
 ```
 
 ## API
-### dnsz.parse(str, [opts])
+### parseZone(str, [opts])
 
 Parse a string of a DNS zone file and returns a `data` object.
 
@@ -33,7 +30,7 @@ Parse a string of a DNS zone file and returns a `data` object.
 - `opts.defaultTTL` *number*: Default TTL when absent and `$TTL` is not present. Default: `60`.
 - `opts.dots` *boolean*: Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
 
-### dnsz.stringify(data, [opts])
+### stringifyZone(data, [opts])
 
 Parse a `data` object and return a string with the zone file contents.
 

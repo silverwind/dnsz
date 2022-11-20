@@ -176,7 +176,7 @@ function splitContentAndComment(str) {
   }
 }
 
-export function parse(str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) {
+export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) {
   const data = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -267,7 +267,7 @@ export function parse(str, {replaceOrigin = defaults.parse.replaceOrigin, crlf =
   return data;
 }
 
-export function stringify(data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) {
+export function stringifyZone(data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) {
   const recordsByType = {};
   const newline = crlf ? "\r\n" : "\n";
 
@@ -315,5 +315,3 @@ export function stringify(data, {crlf = defaults.stringify.crlf, sections = defa
 
   return `${output.trim()}${newline}`;
 }
-
-export default {parse, stringify};

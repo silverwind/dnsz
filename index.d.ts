@@ -4,14 +4,16 @@
  * @param {ParseOptions} [opts={}] Parse options
  * @returns {DnsData} The `data` object
  */
-export function parse(str: string, { replaceOrigin, crlf, defaultTTL, dots }?: ParseOptions): DnsData;
+export function parseZone(str: string, { replaceOrigin, crlf, defaultTTL, dots }?: ParseOptions): DnsData;
+
 /**
  * Parse a `data` object and return a string with the zone file contents.
  * @param {DnsData} data The `data` object.
  * @param {StringifyOptions} [opts={}] Parse options
  * @returns {string} The string with the zone file contents.
  */
-export function stringify(data: DnsData, { crlf, sections, dots }?: StringifyOptions): string;
+export function stringifyZone(data: DnsData, { crlf, sections, dots }?: StringifyOptions): string;
+
 export type DnsRecord = {
     /**
      * The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
@@ -38,6 +40,7 @@ export type DnsRecord = {
      */
     comment: string | null;
 };
+
 export type DnsData = {
     /**
      * Array of `record`
@@ -56,6 +59,7 @@ export type DnsData = {
      */
     header?: string;
 };
+
 export type ParseOptions = {
     /**
      * When specified, replaces any `@` in `name` or `content` with it.
@@ -74,6 +78,7 @@ export type ParseOptions = {
      */
     dots?: boolean;
 };
+
 export type StringifyOptions = {
     /**
      * Whether to group records into sections.
