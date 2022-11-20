@@ -1,5 +1,5 @@
 # dnsz
-[![](https://img.shields.io/npm/v/dnsz.svg?style=flat)](https://www.npmjs.org/package/dnsz) [![](https://img.shields.io/npm/dm/dnsz.svg)](https://www.npmjs.org/package/dnsz)
+[![](https://img.shields.io/npm/v/dnsz.svg?style=flat)](https://www.npmjs.org/package/dnsz) [![](https://img.shields.io/npm/dm/dnsz.svg)](https://www.npmjs.org/package/dnsz) [![](https://img.shields.io/bundlephobia/minzip/dnsz.svg)](https://bundlephobia.com/package/dnsz)
 
 > Generic DNS zone file parser and stringifier
 
