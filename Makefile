@@ -1,38 +1,41 @@
-node_modules: yarn.lock
-	@yarn -s --pure-lockfile
+node_modules: package-lock.json
+	npm install --no-save
 	@touch node_modules
 
+.PHONY: deps
 deps: node_modules
 
+.PHONY: lint
 lint: node_modules
-	yarn -s run eslint --color .
+	npx eslint --color .
 
-test: node_modules lint
-	NODE_OPTIONS="--experimental-vm-modules --no-warnings" yarn -s run jest --color
-	yarn -s run tsc test.js --allowJs --checkJs --noEmit --module es2020 --moduleResolution node --allowSyntheticDefaultImports
+.PHONY: test
+test: node_modules
+	npx vitest
 
-unittest: node_modules
-	NODE_OPTIONS="--experimental-vm-modules --no-warnings" yarn -s run jest --watchAll
-
-publish:
+.PHONY: publish
+publish: node_modules
 	git push -u --tags origin master
 	npm publish
 
+.PHONY: update
 update: node_modules
-	@rm yarn.lock
-	@yarn -s
+	npx updates -cu
+	rm package-lock.json
+	npm install
 	@touch node_modules
 
-patch: node_modules test
-	yarn -s run versions -C patch
+.PHONY: path
+patch: node_modules lint test
+	npx versions patch package.json package-lock.json
 	@$(MAKE) --no-print-directory publish
 
-minor: node_modules test
-	yarn -s run versions -C minor
+.PHONY: minor
+minor: node_modules lint test
+	npx versions minor package.json package-lock.json
 	@$(MAKE) --no-print-directory publish
 
-major: node_modules test
-	yarn -s run versions -C major
+.PHONY: major
+major: node_modules lint test
+	npx versions major package.json package-lock.json
 	@$(MAKE) --no-print-directory publish
-
-.PHONY: lint test unittest publish deps update patch minor major
