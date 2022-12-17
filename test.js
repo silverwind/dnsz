@@ -1,5 +1,5 @@
 import {parseZone, stringifyZone} from "./index.js";
-import {readFileSync} from "fs";
+import {readFileSync} from "node:fs";
 
 test("roundtrip", async () => {
   const str = await readFileSync(new URL("fixtures/simple.txt", import.meta.url), "utf8");
