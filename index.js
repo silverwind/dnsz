@@ -205,12 +205,12 @@ export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, cr
   for (const line of lines) {
     let _, name, ttl, cls, type, contentAndComment;
 
-    const parsedOrigin = (/\$ORIGIN\s+([^\s]+)/.exec(line) || [])[1];
+    const parsedOrigin = (/\$ORIGIN\s+(\S+)/.exec(line) || [])[1];
     if (parsedOrigin && !data.origin) {
       data.origin = normalize(parsedOrigin);
     }
 
-    const parsedTtl = (/\$TTL\s+([^\s]+)/.exec(line) || [])[1];
+    const parsedTtl = (/\$TTL\s+(\S+)/.exec(line) || [])[1];
     if (line.startsWith("$TTL ") && !data.ttl) {
       data.ttl = parseTTL(normalize(parsedTtl));
     }
