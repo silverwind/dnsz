@@ -9,34 +9,21 @@
   "exports": "./index.js",
   "sideEffects": false,
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
+  "files": [
+    "./index.js",
+    "./index.d.ts"
+  ],
   "dependencies": {
     "split-string": "6.1.0"
   },
   "devDependencies": {
-    "eslint": "8.44.0",
-    "eslint-config-silverwind": "73.1.2",
-    "updates": "14.3.2",
-    "versions": "11.0.1",
-    "vitest": "0.33.0",
-    "vitest-config-silverwind": "2.1.0"
-  },
-  "files": [
-    "index.js",
-    "index.d.ts"
-  ],
-  "keywords": [
-    "dns",
-    "dnsz",
-    "zone",
-    "zonefile",
-    "zone-file",
-    "dns zonefile",
-    "dns-zone-file",
-    "bind",
-    "generic",
-    "domain",
-    "rfc"
-  ]
+    "eslint": "8.49.0",
+    "eslint-config-silverwind": "74.1.4",
+    "updates": "15.0.2",
+    "versions": "11.1.0",
+    "vitest": "0.34.4",
+    "vitest-config-silverwind": "3.0.0"
+  }
 }

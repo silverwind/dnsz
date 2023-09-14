@@ -9,9 +9,17 @@ deps: node_modules
 lint: node_modules
 	npx eslint --color .
 
+.PHONY: lint-fix
+lint-fix: node_modules
+	npx eslint --color . --fix
+
 .PHONY: test
-test: lint node_modules
+test: node_modules
 	npx vitest
+
+.PHONY: test-update
+test-update: node_modules
+	npx vitest --update
 
 .PHONY: publish
 publish: node_modules
