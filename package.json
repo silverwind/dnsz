@@ -19,11 +19,11 @@
     "split-string": "6.1.0"
   },
   "devDependencies": {
-    "eslint": "8.49.0",
-    "eslint-config-silverwind": "74.1.4",
-    "updates": "15.0.2",
-    "versions": "11.1.0",
-    "vitest": "0.34.4",
+    "eslint": "8.52.0",
+    "eslint-config-silverwind": "79.0.4",
+    "updates": "15.0.3",
+    "versions": "12.0.0",
+    "vitest": "0.34.6",
     "vitest-config-silverwind": "3.0.0"
   }
 }
