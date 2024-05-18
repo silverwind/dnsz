@@ -3,6 +3,86 @@ import splitString from "split-string";
 // TODO:
 //   - both: support multiline value format (e.g. SOA)
 
+type DnsRecord = {
+    /**
+     * The lowercase DNS name without a trailing dot, e.g. `"example.com"`.
+     */
+    name: string;
+    /**
+     * The TTL in seconds, e.g. `60`.
+     */
+    ttl: number;
+    /**
+     * The DNS class, e.g. `"IN"`.
+     */
+    class: string;
+    /**
+     * The record type, e.g. `"A"`.
+     */
+    type: string;
+    /**
+     * The record content, e.g. `"2001:db8::1"` or `"example.com."`.
+     */
+    content: string;
+    /**
+     * A comment, e.g. `"a comment"`, `null` if absent.
+     */
+    comment: string | null;
+};
+
+type DnsData = {
+    /**
+     * Array of `record`
+     */
+    records: DnsRecord[];
+    /**
+     * The value of `$ORIGIN` in the zone file.
+     */
+    origin?: string;
+    /**
+     * The value of `$TTL` in the zone file.
+     */
+    ttl?: number;
+    /**
+     * An optional header at the start of the file. Can be multiline. Does not include comment markers.
+     */
+    header?: string;
+};
+
+type ParseOptions = {
+    /**
+     * When specified, replaces any `@` in `name` or `content` with it.
+     */
+    replaceOrigin?: string | null;
+    /**
+     * When true, emit `\r\n` instead of `\n` in `header`.
+     */
+    crlf?: boolean;
+    /**
+     * Default TTL when absent and `$TTL` is not present.
+     */
+    defaultTTL?: number;
+    /**
+     * Ensure trailing dots on FQDNs in content. Supports a limited amount of record types.
+     */
+    dots?: boolean;
+};
+
+type StringifyOptions = {
+    /**
+     * Whether to group records into sections.
+     */
+    sections?: boolean;
+    /**
+     * When `true`, emit `\r\n` instead of `\n` for the resulting zone file.
+     */
+    crlf?: boolean;
+    /**
+     * Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
+     */
+    dots?: boolean;
+};
+
 const defaults = {
   parse: {
     replaceOrigin: null,
@@ -40,7 +120,7 @@ const nameLike = {
 const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z0-9]+)[\s]+([a-z0-9]+)[\s]+(.+)?$/i;
 const reTTL = /^[0-9]+[smhdw]?$/;
 
-function normalize(name) {
+function normalize(name: string) {
   name = (name || "").toLowerCase();
   if (name.endsWith(".") && name.length > 1) {
     name = name.substring(0, name.length - 1);
@@ -48,18 +128,19 @@ function normalize(name) {
   return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
 }
 
-function denormalize(name) {
+function denormalize(name: string) {
   if (!name.endsWith(".") && name.length > 1) {
     name = `${name}.`;
   }
   return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
 }
 
-function esc(str) {
+function esc(str: string) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
-function addDots(content, indexes) {
+function addDots(content: string, indexes: number[]): string {
+  // @ts-ignore - splitString type bug?
   const parts = splitString(content, {
     quotes: [`"`],
     separator: " ",
@@ -73,7 +154,7 @@ function addDots(content, indexes) {
   return parts.join(" ");
 }
 
-function parseTTL(ttl, def) {
+function parseTTL(ttl: string | number, def?): number {
   if (typeof ttl === "number") {
     return ttl;
   }
@@ -99,7 +180,14 @@ function parseTTL(ttl, def) {
   return ttl;
 }
 
-function format(records, type, {origin, newline, sections, dots}) {
+type FormatOpts = {
+  origin: string,
+  newline: string,
+  sections: boolean,
+  dots: boolean,
+}
+
+function format(records: DnsRecord[], type: string, {origin, newline, sections, dots}: FormatOpts) {
   let str = ``;
 
   if (sections) {
@@ -150,8 +238,9 @@ function format(records, type, {origin, newline, sections, dots}) {
   return `${str}${sections ? newline : ""}`;
 }
 
-function splitContentAndComment(str) {
+function splitContentAndComment(str: string): [content: string, comment: string] {
   if (!str) return [null, null];
+  // @ts-ignore - splitString type bug?
   const splitted = splitString(str, {
     quotes: [`"`],
     separator: ";",
@@ -176,16 +265,22 @@ function splitContentAndComment(str) {
   }
 }
 
-export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.defaultTTL} = defaults.parse) {
-  const data = {};
+/**
+ * Parse a string of a DNS zone file and returns a `data` object.
+ * @param {string} str The string of DNS zone file
+ * @param {ParseOptions} [opts={}] Parse options
+ * @returns {DnsData} The `data` object
+ */
+export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.dots}: ParseOptions = defaults.parse): DnsData {
+  const data: Partial<DnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
 
   // search for header
-  const headerLines = [];
+  const headerLines: string[] = [];
   let valid;
-  for (const [index, line] of Object.entries(rawLines)) {
+  for (const [index, line] of rawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
     } else {
@@ -203,7 +298,7 @@ export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, cr
   // create records
   data.records = [];
   for (const line of lines) {
-    let _, name, ttl, cls, type, contentAndComment;
+    let name, ttl, cls, type, contentAndComment;
 
     const parsedOrigin = (/\$ORIGIN\s+(\S+)/.exec(line) || [])[1];
     if (parsedOrigin && !data.origin) {
@@ -217,19 +312,19 @@ export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, cr
 
     const match = re.exec(line) || [];
     if (match.length === 6) {
-      [_, name, ttl, cls, type, contentAndComment] = match;
+      [, name, ttl, cls, type, contentAndComment] = match;
       if (name && !ttl && reTTL.test(name)) {
         ttl = name;
         name = undefined;
       }
     } else if (match.length === 5) {
       if (reTTL.test(match[1])) { // no name
-        [_, ttl, cls, type, contentAndComment] = match;
+        [, ttl, cls, type, contentAndComment] = match;
       } else { // no ttl
-        [_, name, cls, type, contentAndComment] = match;
+        [, name, cls, type, contentAndComment] = match;
       }
     } else if (match.length === 4) { // no name and ttl
-      [_, cls, type, contentAndComment] = match;
+      [, cls, type, contentAndComment] = match;
     }
 
     let [content, comment] = splitContentAndComment(contentAndComment);
@@ -264,11 +359,17 @@ export function parseZone(str, {replaceOrigin = defaults.parse.replaceOrigin, cr
     data.origin = replaceOrigin;
   }
 
-  return data;
+  return data as DnsData;
 }
 
-export function stringifyZone(data, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots} = defaults.stringify) {
-  const recordsByType = {};
+/**
+ * Parse a `data` object and return a string with the zone file contents.
+ * @param {DnsData} data The `data` object.
+ * @param {StringifyOptions} [opts={}] Parse options
+ * @returns {string} The string with the zone file contents.
+ */
+export function stringifyZone(data: DnsData, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots}: StringifyOptions = defaults.stringify): string {
+  const recordsByType: Record<string, [DnsRecord?]> = {};
   const newline = crlf ? "\r\n" : "\n";
 
   if (sections) {
@@ -289,7 +390,7 @@ export function stringifyZone(data, {crlf = defaults.stringify.crlf, sections = 
       .trim()}${newline}${newline}`;
   }
 
-  const vars = [];
+  const vars: string[] = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;

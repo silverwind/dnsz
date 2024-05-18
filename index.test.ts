@@ -1,15 +1,15 @@
-import {parseZone, stringifyZone} from "./index.js";
+import {parseZone, stringifyZone} from "./index.ts";
 import {readFileSync} from "node:fs";
 
-test("roundtrip", async () => {
-  const str = await readFileSync(new URL("fixtures/simple.txt", import.meta.url), "utf8");
+test("roundtrip", () => {
+  const str = readFileSync(new URL("fixtures/simple.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("basic", async () => {
-  const str = await readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
+test("basic", () => {
+  const str = readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
@@ -31,7 +31,7 @@ test("basic", async () => {
   expect(/^\$ORIGIN\s.+$/m.test(withOrigin)).toBe(true);
 });
 
-test("origin", async () => {
+test("origin", () => {
   const data = {
     "origin": "originzone.com",
     "records": [
@@ -57,8 +57,8 @@ test("origin", async () => {
   expect(/^@/m.test(result)).toBe(true);
 });
 
-test("ttl", async () => {
-  const str = await readFileSync(new URL("fixtures/ttl.txt", import.meta.url), "utf8");
+test("ttl", () => {
+  const str = readFileSync(new URL("fixtures/ttl.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   expect(parseZoned.records.length).toEqual(5);
   for (const record of parseZoned.records) {
@@ -76,36 +76,36 @@ test("ttl", async () => {
   expect(/^\$TTL\s[0-9]+$/m.test(withTTL)).toBe(true);
 });
 
-test("header", async () => {
-  const str = await readFileSync(new URL("fixtures/header.txt", import.meta.url), "utf8");
+test("header", () => {
+  const str = readFileSync(new URL("fixtures/header.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("replaceOrigin", async () => {
-  const str = await readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
+test("replaceOrigin", () => {
+  const str = readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
   const replaceOrigin = "another.com";
   const parseZoned = parseZone(str, {replaceOrigin});
   expect(parseZoned.origin).toEqual(replaceOrigin);
 });
 
-test("nosections", async () => {
-  const str = await readFileSync(new URL("fixtures/nosections.txt", import.meta.url), "utf8");
+test("nosections", () => {
+  const str = readFileSync(new URL("fixtures/nosections.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned, {sections: false});
   expect(roundtripped).toEqual(str);
 });
 
-test("noname", async () => {
-  const str = await readFileSync(new URL("fixtures/noname.txt", import.meta.url), "utf8");
+test("noname", () => {
+  const str = readFileSync(new URL("fixtures/noname.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("nottl", async () => {
-  const str = await readFileSync(new URL("fixtures/nottl.txt", import.meta.url), "utf8");
+test("nottl", () => {
+  const str = readFileSync(new URL("fixtures/nottl.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   for (const record of parseZoned.records) {
     expect(typeof record.name).toEqual("string");
@@ -116,8 +116,8 @@ test("nottl", async () => {
   }
 });
 
-test("ttlunits", async () => {
-  const str = await readFileSync(new URL("fixtures/ttlunits.txt", import.meta.url), "utf8");
+test("ttlunits", () => {
+  const str = readFileSync(new URL("fixtures/ttlunits.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   for (const record of parseZoned.records) {
     if (record.type === "SOA") {
@@ -132,30 +132,30 @@ test("ttlunits", async () => {
   }
 });
 
-test("semicontent", async () => {
-  const str = await readFileSync(new URL("fixtures/semicontent.txt", import.meta.url), "utf8");
+test("semicontent", () => {
+  const str = readFileSync(new URL("fixtures/semicontent.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("dash", async () => {
-  const str = await readFileSync(new URL("fixtures/dash.txt", import.meta.url), "utf8");
+test("dash", () => {
+  const str = readFileSync(new URL("fixtures/dash.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("wildcard", async () => {
-  const str = await readFileSync(new URL("fixtures/wildcard.txt", import.meta.url), "utf8");
+test("wildcard", () => {
+  const str = readFileSync(new URL("fixtures/wildcard.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("dots", async () => {
-  const dotsstr = await readFileSync(new URL("fixtures/dots.txt", import.meta.url), "utf8");
-  const nodotsstr = await readFileSync(new URL("fixtures/nodots.txt", import.meta.url), "utf8");
+test("dots", () => {
+  const dotsstr = readFileSync(new URL("fixtures/dots.txt", import.meta.url), "utf8");
+  const nodotsstr = readFileSync(new URL("fixtures/nodots.txt", import.meta.url), "utf8");
   expect(stringifyZone(parseZone(dotsstr, {dots: false}), {dots: false})).toEqual(dotsstr);
   expect(stringifyZone(parseZone(dotsstr, {dots: false}), {dots: true})).toEqual(dotsstr);
   expect(stringifyZone(parseZone(dotsstr, {dots: true}), {dots: true})).toEqual(dotsstr);
@@ -164,22 +164,22 @@ test("dots", async () => {
   expect(stringifyZone(parseZone(nodotsstr, {dots: true}), {dots: true})).toEqual(dotsstr);
 });
 
-test("comments", async () => {
-  const str = await readFileSync(new URL("fixtures/comments.txt", import.meta.url), "utf8");
+test("comments", () => {
+  const str = readFileSync(new URL("fixtures/comments.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("soa parens", async () => {
-  const str = await readFileSync(new URL("fixtures/soaparens.txt", import.meta.url), "utf8");
+test("soa parens", () => {
+  const str = readFileSync(new URL("fixtures/soaparens.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
-test("type65534", async () => {
-  const str = await readFileSync(new URL("fixtures/type65534.txt", import.meta.url), "utf8");
+test("type65534", () => {
+  const str = readFileSync(new URL("fixtures/type65534.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
