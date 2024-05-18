@@ -6,14 +6,12 @@
   "repository": "silverwind/dnsz",
   "license": "BSD-2-Clause",
   "type": "module",
-  "exports": "./index.js",
   "sideEffects": false,
-  "engines": {
-    "node": ">=18"
-  },
+  "main": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "./index.js",
-    "./index.d.ts"
+    "dist"
   ],
   "dependencies": {
     "split-string": "6.1.0"
