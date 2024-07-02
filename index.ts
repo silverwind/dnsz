@@ -120,7 +120,7 @@ const nameLike = {
 const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z0-9]+)[\s]+([a-z0-9]+)[\s]+(.+)?$/i;
 const reTTL = /^[0-9]+[smhdw]?$/;
 
-function normalize(name: string) {
+function normalize(name?: string) {
   name = (name || "").toLowerCase();
   if (name.endsWith(".") && name.length > 1) {
     name = name.substring(0, name.length - 1);
@@ -145,7 +145,7 @@ function addDots(content: string, indexes: number[]): string {
     quotes: [`"`],
     separator: " ",
     keep: () => true, // keep backslashes
-  }).map(s => s.trim()).filter(Boolean);
+  }).map((s: string) => s.trim()).filter(Boolean);
   for (const index of indexes) {
     if (!parts[index].endsWith(".")) {
       parts[index] += ".";
@@ -154,7 +154,7 @@ function addDots(content: string, indexes: number[]): string {
   return parts.join(" ");
 }
 
-function parseTTL(ttl: string | number, def?): number {
+function parseTTL(ttl: string | number, def?: number): number {
   if (typeof ttl === "number") {
     return ttl;
   }
@@ -187,14 +187,15 @@ type FormatOpts = {
   dots: boolean,
 }
 
-function format(records: DnsRecord[], type: string, {origin, newline, sections, dots}: FormatOpts) {
+function format(records: (DnsRecord | undefined)[], type: string | null, {origin, newline, sections, dots}: FormatOpts) {
   let str = ``;
 
-  if (sections) {
+  if (sections && type) {
     str += `;; ${type} Records${newline}`;
   }
 
-  for (const record of records) {
+  for (const record of records || []) {
+    if (!record) continue;
     let name = normalize(record.name || "");
 
     if (origin) {
@@ -218,7 +219,8 @@ function format(records: DnsRecord[], type: string, {origin, newline, sections, 
 
     let content = record.content;
     if (dots && Object.keys(nameLike).includes(record.type)) {
-      content = addDots(content, nameLike[record.type]);
+      const indexes: number[] = nameLike[record.type as keyof typeof nameLike];
+      content = addDots(content, indexes);
     }
 
     const fields = [
@@ -238,7 +240,7 @@ function format(records: DnsRecord[], type: string, {origin, newline, sections, 
   return `${str}${sections ? newline : ""}`;
 }
 
-function splitContentAndComment(str: string): [content: string, comment: string] {
+function splitContentAndComment(str?: string): [content: string | null, comment: string | null] {
   if (!str) return [null, null];
   // @ts-expect-error - splitString type bug?
   const splitted = splitString(str, {
@@ -254,7 +256,7 @@ function splitContentAndComment(str: string): [content: string, comment: string]
     parts = splitted;
   }
 
-  parts = parts.map(part => (part || "").trim()).filter(Boolean);
+  parts = parts.map((part: string) => (part || "").trim()).filter(Boolean);
 
   if (parts.length <= 2) {
     return [parts[0] || null, parts[1] || null];
@@ -268,8 +270,6 @@ function splitContentAndComment(str: string): [content: string, comment: string]
 /**
  * Parse a string of a DNS zone file and returns a `data` object.
  * @param {string} str The string of DNS zone file
- * @param {ParseOptions} [opts={}] Parse options
- * @returns {DnsData} The `data` object
  */
 export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.dots}: ParseOptions = defaults.parse): DnsData {
   const data: Partial<DnsData> = {};
@@ -329,6 +329,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
 
     let [content, comment] = splitContentAndComment(contentAndComment);
 
+    // @ts-expect-error -- check later
     ttl = parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL);
 
     if (!name) {
@@ -342,7 +343,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
     type = type.toUpperCase();
     content = (content || "").trim();
     if (dots && Object.keys(nameLike).includes(type)) {
-      content = addDots(content, nameLike[type]);
+      content = addDots(content, nameLike[type as keyof typeof nameLike]);
     }
 
     data.records.push({
