@@ -140,7 +140,7 @@ function esc(str: string) {
 }
 
 function addDots(content: string, indexes: number[]): string {
-  // @ts-ignore - splitString type bug?
+  // @ts-expect-error - splitString type bug?
   const parts = splitString(content, {
     quotes: [`"`],
     separator: " ",
@@ -240,7 +240,7 @@ function format(records: DnsRecord[], type: string, {origin, newline, sections, 
 
 function splitContentAndComment(str: string): [content: string, comment: string] {
   if (!str) return [null, null];
-  // @ts-ignore - splitString type bug?
+  // @ts-expect-error - splitString type bug?
   const splitted = splitString(str, {
     quotes: [`"`],
     separator: ";",
