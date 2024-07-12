@@ -1,5 +1,3 @@
-import splitString from "split-string";
-
 // TODO:
 //   - both: support multiline value format (e.g. SOA)
 
@@ -128,6 +126,88 @@ function normalize(name?: string) {
   return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
 }
 
+function splitString(input: string, {separator = " ", quotes = []}: {separator?: string, quotes?: string[]} = {}) {
+  const ast = {type: "root", nodes: [], stash: [""]};
+  const stack = [ast];
+  const string = input;
+  let value: string;
+  let node: any;
+  let i = -1;
+  const state: Record<string, any> = {
+    input,
+    separator,
+    stack,
+    prev: () => string[i - 1],
+    next: () => string[i + 1],
+  };
+
+  const block = () => (state.block = stack[stack.length - 1]);
+  const peek = () => string[i + 1];
+  const next = () => string[++i];
+  const append = (value: string) => {
+    state.value = value;
+    if (value) {
+      state.block.stash[state.block.stash.length - 1] += value;
+    }
+  };
+
+  const closeIndex = (value: string, startIdx: number) => {
+    let idx = string.indexOf(value, startIdx);
+    if (idx > -1 && string[idx - 1] === "\\") {
+      idx = closeIndex(value, idx + 1);
+    }
+    return idx;
+  };
+
+  while (i < string.length - 1) {
+    state.value = value = next();
+    state.index = i;
+    block();
+
+    if (value === "\\") {
+      if (peek() === "\\") {
+        append(value + next());
+      } else {
+        append(value);
+        append(next());
+      }
+      continue;
+    }
+
+    if (quotes.includes(value)) {
+      const pos = i + 1;
+      const idx = closeIndex(value, pos);
+
+      if (idx > -1) {
+        append(value);
+        append(string.slice(pos, idx));
+        append(string[idx]);
+        i = idx;
+        continue;
+      }
+
+      append(value);
+      continue;
+    }
+
+    if (value === separator && state.block.type === "root") {
+      state.block.stash.push("");
+      continue;
+    }
+
+    append(value);
+  }
+
+  node = stack.pop();
+  while (node !== ast) {
+    value = (node.parent.stash.pop() + node.stash.join("."));
+    node.parent.stash = node.parent.stash.concat(value.split("."));
+    node = stack.pop();
+  }
+
+  return node.stash;
+}
+
 function denormalize(name: string) {
   if (!name.endsWith(".") && name.length > 1) {
     name = `${name}.`;
@@ -140,11 +220,9 @@ function esc(str: string) {
 }
 
 function addDots(content: string, indexes: number[]): string {
-  // @ts-expect-error - splitString type bug?
   const parts = splitString(content, {
     quotes: [`"`],
     separator: " ",
-    keep: () => true, // keep backslashes
   }).map((s: string) => s.trim()).filter(Boolean);
   for (const index of indexes) {
     if (!parts[index].endsWith(".")) {
@@ -242,11 +320,9 @@ function format(records: (DnsRecord | undefined)[], type: string | null, {origin
 
 function splitContentAndComment(str?: string): [content: string | null, comment: string | null] {
   if (!str) return [null, null];
-  // @ts-expect-error - splitString type bug?
   const splitted = splitString(str, {
     quotes: [`"`],
     separator: ";",
-    keep: () => true,
   });
 
   let parts;

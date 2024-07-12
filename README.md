@@ -3,7 +3,7 @@
 
 > Generic DNS zone file parser and stringifier
 
-All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and has minimal dependencies.
+All current and future record types are supported as the module makes no effort to parse a record's content. It is highly configurable and has no dependencies.
 
 ## Usage
 
