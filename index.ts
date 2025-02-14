@@ -343,10 +343,7 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
   }
 }
 
-/**
- * Parse a string of a DNS zone file and returns a `data` object.
- * @param {string} str The string of DNS zone file
- */
+/** Parse a string of a DNS zone file and returns a `data` object. */
 export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.dots}: ParseOptions = defaults.parse): DnsData {
   const data: Partial<DnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
@@ -439,12 +436,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
   return data as DnsData;
 }
 
-/**
- * Parse a `data` object and return a string with the zone file contents.
- * @param {DnsData} data The `data` object.
- * @param {StringifyOptions} [opts={}] Parse options
- * @returns {string} The string with the zone file contents.
- */
+/** Parse a `data` object and return a string with the zone file contents. */
 export function stringifyZone(data: DnsData, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots}: StringifyOptions = defaults.stringify): string {
   const recordsByType: Record<string, [DnsRecord?]> = {};
   const newline = crlf ? "\r\n" : "\n";
