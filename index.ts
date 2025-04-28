@@ -49,21 +49,6 @@ export type DnszStringifyOptions = {
     dots?: boolean;
 };
 
-const defaults = {
-  parse: {
-    replaceOrigin: null,
-    crlf: false,
-    defaultTTL: 60,
-    defaultClass: "IN",
-    dots: false,
-  },
-  stringify: {
-    crlf: false,
-    sections: true,
-    dots: false,
-  },
-};
-
 // List of types and places where they have name-like content, used on the `dot` option.
 const nameLike = {
   ALIAS: [0],
@@ -310,7 +295,7 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
 }
 
 /** Parse a string of a DNS zone file and returns a `data` object. */
-export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, defaultClass = defaults.parse.defaultClass, dots = defaults.parse.dots}: DnszParseOptions = defaults.parse): DnszDnsData {
+export function parseZone(str: string, {replaceOrigin = null, crlf = false, defaultTTL = 60, defaultClass = "IN", dots = false}: DnszParseOptions = {}): DnszDnsData {
   const data: Partial<DnszDnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -396,7 +381,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
 }
 
 /** Parse a `data` object and return a string with the zone file contents. */
-export function stringifyZone(data: DnszDnsData, {crlf = defaults.stringify.crlf, sections = defaults.stringify.sections, dots = defaults.stringify.dots}: DnszStringifyOptions = defaults.stringify): string {
+export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true, dots = false}: DnszStringifyOptions = {}): string {
   const recordsByType: Record<string, [DnszDnsRecord?]> = {};
   const newline = crlf ? "\r\n" : "\n";
 
