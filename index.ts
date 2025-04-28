@@ -1,6 +1,3 @@
-// TODO:
-//   - both: support multiline value format (e.g. SOA)
-
 export type DnszDnsRecord = {
     /**The lowercase DNS name without a trailing dot, e.g. `"example.com"`. */
     name: string;
