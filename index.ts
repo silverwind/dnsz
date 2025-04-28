@@ -400,9 +400,6 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
     }
     let [content, comment] = splitContentAndComment(contentAndComment);
 
-    // @ts-expect-error -- check later
-    ttl = parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL);
-
     if (!name) {
       name = "";
     }
@@ -419,7 +416,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
 
     data.records.push({
       name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
-      ttl: Number(ttl),
+      ttl: parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL),
       class: cls.toUpperCase(),
       type,
       content,
