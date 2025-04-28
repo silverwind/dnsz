@@ -195,7 +195,7 @@ test("inoptional", () => {
         {
           "class": "IN",
           "comment": null,
-          "content": "5.183.217.99",
+          "content": "1.2.3.4",
           "name": "example.com",
           "ttl": 300,
           "type": "A",
@@ -262,7 +262,7 @@ test("inoptional", () => {
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toMatchInlineSnapshot(`
     ";; A Records
-    example.com.	300	IN	A	5.183.217.99
+    example.com.	300	IN	A	1.2.3.4
 
     ;; CNAME Records
     _dmarc.example.com.	300	IN	CNAME	foo.com.
