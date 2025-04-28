@@ -1,0 +1,8 @@
+example.com.	300	A	5.183.217.99
+example.com.	600	MX	10 mail.example.com.
+example.com.	172800	NS	foo.com.
+example.com.	172800	NS	bar.com.
+example.com.	300	TXT	"test"
+_dmarc.example.com.	300	CNAME	foo.com.
+_sip._tcp.example.com.	600	SRV	0 0 5060 sip.foo.com.
+_sips._tcp.example.com.	600	SRV	0 0 5061 sips.foo.com.
