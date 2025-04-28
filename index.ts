@@ -327,7 +327,7 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
     separator: ";",
   });
 
-  let parts;
+  let parts: Array<string>;
   if (splitted.length > 2) { // more than one semicolon
     parts = [splitted[0], splitted.slice(1).join(";")];
   } else {
@@ -354,7 +354,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
 
   // search for header
   const headerLines: string[] = [];
-  let valid;
+  let valid: boolean;
   for (const [index, line] of rawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
@@ -444,7 +444,6 @@ export function stringifyZone(data: DnsData, {crlf = defaults.stringify.crlf, se
   }
 
   let output = "";
-
   if (data.header) {
     output += `${data.header
       .split(/\r?\n/)
@@ -460,7 +459,6 @@ export function stringifyZone(data: DnsData, {crlf = defaults.stringify.crlf, se
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
 
   const origin = normalize(data.origin);
-
   if (sections) {
     if (recordsByType.SOA) {
       output += format(recordsByType.SOA, "SOA", {origin, newline, sections, dots});
