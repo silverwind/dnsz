@@ -1,4 +1,3 @@
-/* eslint-disable @stylistic/js/no-tabs */
 import {parseZone, stringifyZone} from "./index.ts";
 import {readFileSync} from "node:fs";
 
