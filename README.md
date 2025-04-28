@@ -28,6 +28,7 @@ Parse a string of a DNS zone file and returns a `data` object.
 - `opts.replaceOrigin` *string*: When specified, replaces any `@` in `name` or `content` with it. Default: `null`.
 - `opts.crlf` *boolean*: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
 - `opts.defaultTTL` *number*: Default TTL when absent and `$TTL` is not present. Default: `60`.
+- `opts.defaultClass` *string*: Default class when absent. Default: `"IN"`.
 - `opts.dots` *boolean*: Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`.
 
 ### stringifyZone(data, [opts])

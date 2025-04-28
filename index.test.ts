@@ -1,3 +1,4 @@
+/* eslint-disable @stylistic/js/no-tabs */
 import {parseZone, stringifyZone} from "./index.ts";
 import {readFileSync} from "node:fs";
 
@@ -183,4 +184,102 @@ test("type65534", () => {
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
+});
+
+test("inoptional", () => {
+  const str = readFileSync(new URL("fixtures/inoptional.txt", import.meta.url), "utf8");
+  const parseZoned = parseZone(str);
+  expect(parseZoned).toMatchInlineSnapshot(`
+    {
+      "records": [
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "5.183.217.99",
+          "name": "example.com",
+          "ttl": 300,
+          "type": "A",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "10 mail.example.com.",
+          "name": "example.com",
+          "ttl": 600,
+          "type": "MX",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "foo.com.",
+          "name": "example.com",
+          "ttl": 172800,
+          "type": "NS",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "bar.com.",
+          "name": "example.com",
+          "ttl": 172800,
+          "type": "NS",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": ""test"",
+          "name": "example.com",
+          "ttl": 300,
+          "type": "TXT",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "foo.com.",
+          "name": "_dmarc.example.com",
+          "ttl": 300,
+          "type": "CNAME",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "0 0 5060 sip.foo.com.",
+          "name": "_sip._tcp.example.com",
+          "ttl": 600,
+          "type": "SRV",
+        },
+        {
+          "class": "IN",
+          "comment": null,
+          "content": "0 0 5061 sips.foo.com.",
+          "name": "_sips._tcp.example.com",
+          "ttl": 600,
+          "type": "SRV",
+        },
+      ],
+    }
+  `);
+  const roundtripped = stringifyZone(parseZoned);
+  expect(roundtripped).toMatchInlineSnapshot(`
+    ";; A Records
+    example.com.	300	IN	A	5.183.217.99
+
+    ;; CNAME Records
+    _dmarc.example.com.	300	IN	CNAME	foo.com.
+
+    ;; MX Records
+    example.com.	600	IN	MX	10 mail.example.com.
+
+    ;; NS Records
+    example.com.	172800	IN	NS	foo.com.
+    example.com.	172800	IN	NS	bar.com.
+
+    ;; SRV Records
+    _sip._tcp.example.com.	600	IN	SRV	0 0 5060 sip.foo.com.
+    _sips._tcp.example.com.	600	IN	SRV	0 0 5061 sips.foo.com.
+
+    ;; TXT Records
+    example.com.	300	IN	TXT	"test"
+    "
+  `);
 });

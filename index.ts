@@ -57,6 +57,10 @@ type ParseOptions = {
      */
     crlf?: boolean;
     /**
+     * Default class when absent.
+     */
+    defaultClass?: string;
+    /**
      * Default TTL when absent and `$TTL` is not present.
      */
     defaultTTL?: number;
@@ -86,6 +90,7 @@ const defaults = {
     replaceOrigin: null,
     crlf: false,
     defaultTTL: 60,
+    defaultClass: "IN",
     dots: false,
   },
   stringify: {
@@ -114,9 +119,6 @@ const nameLike = {
   TKEY: [0],
   TSIG: [0],
 };
-
-const re = /^([a-z0-9_.\-@*]+)?[\s]*([0-9]+[smhdw]?)?[\s]*([a-z0-9]+)[\s]+([a-z0-9]+)[\s]+(.+)?$/i;
-const reTTL = /^[0-9]+[smhdw]?$/;
 
 function normalize(name?: string) {
   name = (name || "").toLowerCase();
@@ -344,7 +346,7 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
 }
 
 /** Parse a string of a DNS zone file and returns a `data` object. */
-export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, dots = defaults.parse.dots}: ParseOptions = defaults.parse): DnsData {
+export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOrigin, crlf = defaults.parse.crlf, defaultTTL = defaults.parse.defaultTTL, defaultClass = defaults.parse.defaultClass, dots = defaults.parse.dots}: ParseOptions = defaults.parse): DnsData {
   const data: Partial<DnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
   const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
@@ -368,11 +370,12 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
     data.header = headerLines.join(newline);
   }
 
+  // https://regex101.com/r/aKuGyZ/3
+  const reLine = /^([a-z0-9_.\-@*]+)?\s*([0-9]+[smhdw]?)?\s*([a-z]+)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
+
   // create records
   data.records = [];
   for (const line of lines) {
-    let name, ttl, cls, type, contentAndComment;
-
     const parsedOrigin = (/\$ORIGIN\s+(\S+)/.exec(line) || [])[1];
     if (parsedOrigin && !data.origin) {
       data.origin = normalize(parsedOrigin);
@@ -383,23 +386,18 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
       data.ttl = parseTTL(normalize(parsedTtl));
     }
 
-    const match = re.exec(line) || [];
-    if (match.length === 6) {
-      [, name, ttl, cls, type, contentAndComment] = match;
-      if (name && !ttl && reTTL.test(name)) {
-        ttl = name;
-        name = undefined;
-      }
-    } else if (match.length === 5) {
-      if (reTTL.test(match[1])) { // no name
-        [, ttl, cls, type, contentAndComment] = match;
-      } else { // no ttl
-        [, name, cls, type, contentAndComment] = match;
-      }
-    } else if (match.length === 4) { // no name and ttl
-      [, cls, type, contentAndComment] = match;
+    let [, name, ttl, cls, type, contentAndComment] = reLine.exec(line) || [];
+    if (!ttl && name && /[0-9]+/.test(name)) { // no name
+      ttl = name;
+      name = "";
     }
-
+    if (cls && !type) { // class is optional
+      type = cls;
+      cls = "";
+    }
+    if (!cls) {
+      cls = defaultClass;
+    }
     let [content, comment] = splitContentAndComment(contentAndComment);
 
     // @ts-expect-error -- check later
@@ -421,7 +419,7 @@ export function parseZone(str: string, {replaceOrigin = defaults.parse.replaceOr
 
     data.records.push({
       name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
-      ttl,
+      ttl: Number(ttl),
       class: cls.toUpperCase(),
       type,
       content,
