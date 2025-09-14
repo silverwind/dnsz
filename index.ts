@@ -1,49 +1,49 @@
 export type DnszDnsRecord = {
     /**The lowercase DNS name without a trailing dot, e.g. `"example.com"`. */
-    name: string;
+  name: string;
     /** The TTL in seconds, e.g. `60`. */
-    ttl: number;
+  ttl: number;
     /** The DNS class, e.g. `"IN"`. */
-    class: string;
+  class: string;
     /** The record type, e.g. `"A"`. */
-    type: string;
+  type: string;
     /** The record content, e.g. `"2001:db8::1"` or `"example.com."`. */
-    content: string;
+  content: string;
     /** A comment, e.g. `"a comment"`, `null` if absent. */
-    comment: string | null;
+  comment: string | null;
 };
 
 export type DnszDnsData = {
     /** Array of `record` */
-    records: DnszDnsRecord[];
+  records: DnszDnsRecord[];
     /**  The value of `$ORIGIN` in the zone file. */
-    origin?: string;
+  origin?: string;
     /** The value of `$TTL` in the zone file. */
-    ttl?: number;
+  ttl?: number;
     /** An optional header at the start of the file. Can be multiline. Does not include comment markers. */
-    header?: string;
+  header?: string;
 };
 
 export type DnszParseOptions = {
     /** When specified, replaces any `@` in `name` or `content` with it. */
-    replaceOrigin?: string | null;
+  replaceOrigin?: string | null;
     /** When true, emit `\r\n` instead of `\n` in `header`. */
-    crlf?: boolean;
+  crlf?: boolean;
     /** Default class when absent. */
-    defaultClass?: string;
+  defaultClass?: string;
     /** Default TTL when absent and `$TTL` is not present. */
-    defaultTTL?: number;
+  defaultTTL?: number;
     /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. */
-    dots?: boolean;
+  dots?: boolean;
 };
 
 export type DnszStringifyOptions = {
     /** Whether to group records into sections. */
-    sections?: boolean;
+  sections?: boolean;
     /** When `true`, emit `\r\n` instead of `\n` for the resulting zone file. */
-    crlf?: boolean;
+  crlf?: boolean;
     /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`. */
-    dots?: boolean;
+  dots?: boolean;
 };
 
 // List of types and places where they have name-like content, used on the `dot` option.
@@ -211,7 +211,7 @@ type FormatOpts = {
   newline: string,
   sections: boolean,
   dots: boolean,
-}
+};
 
 function format(records: (DnszDnsRecord | undefined)[], type: string | null, {origin, newline, sections, dots}: FormatOpts) {
   let str = ``;
