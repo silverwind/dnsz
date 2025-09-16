@@ -14,14 +14,14 @@
     "dist"
   ],
   "devDependencies": {
-    "@types/node": "24.4.0",
+    "@types/node": "24.5.0",
     "eslint": "9.35.0",
-    "eslint-config-silverwind": "103.0.4",
+    "eslint-config-silverwind": "103.0.6",
     "typescript-config-silverwind": "10.0.1",
     "updates": "16.7.2",
     "versions": "13.1.1",
     "vite": "7.1.5",
-    "vite-config-silverwind": "5.5.0",
+    "vite-config-silverwind": "6.0.1",
     "vitest": "3.2.4",
     "vitest-config-silverwind": "10.2.0"
   }
