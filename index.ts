@@ -15,7 +15,7 @@ export type DnszDnsRecord = {
 
 export type DnszDnsData = {
     /** Array of `record` */
-  records: DnszDnsRecord[];
+  records: Array<DnszDnsRecord>;
     /**  The value of `$ORIGIN` in the zone file. */
   origin?: string;
     /** The value of `$TTL` in the zone file. */
@@ -74,7 +74,7 @@ function normalize(name?: string) {
   return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
 }
 
-function splitString(input: string, {separator = " ", quotes = []}: {separator?: string, quotes?: string[]} = {}) {
+function splitString(input: string, {separator = " ", quotes = []}: {separator?: string, quotes?: Array<string>} = {}) {
   const ast = {type: "root", nodes: [], stash: [""]};
   const stack = [ast];
   const string = input;
@@ -167,7 +167,7 @@ function esc(str: string) {
   return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
 }
 
-function addDots(content: string, indexes: number[]): string {
+function addDots(content: string, indexes: Array<number>): string {
   const parts = splitString(content, {
     quotes: [`"`],
     separator: " ",
@@ -213,7 +213,7 @@ type FormatOpts = {
   dots: boolean,
 };
 
-function format(records: (DnszDnsRecord | undefined)[], type: string | null, {origin, newline, sections, dots}: FormatOpts) {
+function format(records: Array<DnszDnsRecord | undefined>, type: string | null, {origin, newline, sections, dots}: FormatOpts) {
   let str = ``;
 
   if (sections && type) {
@@ -245,7 +245,7 @@ function format(records: (DnszDnsRecord | undefined)[], type: string | null, {or
 
     let content = record.content;
     if (dots && Object.keys(nameLike).includes(record.type)) {
-      const indexes: number[] = nameLike[record.type as keyof typeof nameLike];
+      const indexes: Array<number> = nameLike[record.type as keyof typeof nameLike];
       content = addDots(content, indexes);
     }
 
@@ -266,7 +266,7 @@ function format(records: (DnszDnsRecord | undefined)[], type: string | null, {or
   return `${str}${sections ? newline : ""}`;
 }
 
-function splitContentAndComment(str?: string): [content: string | null, comment: string | null] {
+function splitContentAndComment(str?: string): [content: string | null, comment: string | null | undefined] {
   if (!str) return [null, null];
   const splitted = splitString(str, {
     quotes: [`"`],
@@ -299,8 +299,8 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   const newline = crlf ? "\r\n" : "\n";
 
   // search for header
-  const headerLines: string[] = [];
-  let valid: boolean;
+  const headerLines: Array<string> = [];
+  let valid: boolean = false;
   for (const [index, line] of rawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
@@ -399,7 +399,7 @@ export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true,
       .trim()}${newline}${newline}`;
   }
 
-  const vars: string[] = [];
+  const vars: Array<string> = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
