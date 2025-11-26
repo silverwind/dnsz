@@ -66,7 +66,7 @@ const nameLike = {
   TSIG: [0],
 };
 
-function normalize(name?: string) {
+function normalize(name: string) {
   name = (name || "").toLowerCase();
   if (name.endsWith(".") && name.length > 1) {
     name = name.substring(0, name.length - 1);
@@ -379,7 +379,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
 /** Parse a `data` object and return a string with the zone file contents. */
 export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true, dots = false}: DnszStringifyOptions = {}): string {
-  const recordsByType: Record<string, [DnszDnsRecord?]> = {};
+  const recordsByType: Record<string, Array<DnszDnsRecord>> = {};
   const newline = crlf ? "\r\n" : "\n";
 
   if (sections) {
@@ -404,7 +404,7 @@ export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true,
   if (data.ttl) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
 
-  const origin = normalize(data.origin);
+  const origin = normalize(data.origin || "");
   if (sections) {
     if (recordsByType.SOA) {
       output += format(recordsByType.SOA, "SOA", {origin, newline, sections, dots});
