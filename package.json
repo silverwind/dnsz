@@ -17,10 +17,11 @@
     "@types/node": "24.10.1",
     "eslint": "9.39.1",
     "eslint-config-silverwind": "112.0.1",
+    "tsdown": "0.16.7",
+    "tsdown-config-silverwind": "1.5.3",
     "typescript-config-silverwind": "14.0.0",
     "updates": "16.9.1",
     "versions": "14.0.3",
-    "vite": "7.2.4",
     "vite-config-silverwind": "6.0.5",
     "vitest": "4.0.14",
     "vitest-config-silverwind": "10.4.2"
