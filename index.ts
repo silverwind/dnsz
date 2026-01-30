@@ -298,7 +298,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   let lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
 
-  # mulitline SOA support
+  // mulitline SOA support
   const combinedLines: Array<string> = [];
   let i = 0;
   while (i < lines.length) {
