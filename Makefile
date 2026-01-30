@@ -32,6 +32,13 @@ build: node_modules $(DIST_FILES)
 $(DIST_FILES): $(SOURCE_FILES) package-lock.json tsdown.config.ts
 	npx tsdown
 
+.PHONY: update
+update: node_modules
+	npx updates -cu
+	rm -rf node_modules package-lock.json
+	npm install
+	@touch node_modules
+
 .PHONY: publish
 publish: node_modules
 	npm publish
