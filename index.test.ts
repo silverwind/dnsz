@@ -1,16 +1,58 @@
 import {parseZone, stringifyZone} from "./index.ts";
-import {readFileSync} from "node:fs";
 import dedent from "dedent";
 
 test("roundtrip", () => {
-  const str = readFileSync(new URL("fixtures/simple.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    simplezone.com.	3600	IN	SOA	simplezone.com. root.simplezone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    simplezone.com.	60	IN	A	1.2.3.4	; a comment
+    mx.simplezone.com.	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    simplezone.com.	120	IN	AAAA	2001:db8::1
+    mx.simplezone.com.	120	IN	AAAA	2001:db8::1
+
+    ;; CAA Records
+    simplezone.com.	120	IN	CAA	0 issue "simplezone.com"
+
+    ;; CNAME Records
+    cname1.simplezone.com.	120	IN	CNAME	simplezone.com.
+    cname2.simplezone.com.	120	IN	CNAME	simplezone.com.
+
+    ;; MX Records
+    simplezone.com.	120	IN	MX	10 mx.simplezone.com.
+    simplezone.com.	120	IN	MX	10 mx3.simplezone.com.
+    simplezone.com.	120	IN	MX	10 mx2.simplezone.com.
+
+    ;; TXT Records
+    simplezone.com.	120	IN	TXT	"first record"
+    simplezone.com.	120	IN	TXT	"second record"
+    simplezone.com.	120	IN	TXT	"third record"
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("basic", () => {
-  const str = readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    $ORIGIN originzone.com.
+
+    ;; SOA Records
+    @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	60	IN	A	1.2.3.4	; a comment
+    mx	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	120	IN	AAAA	2001:db8::1
+    mx	120	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
@@ -59,7 +101,22 @@ test("origin", () => {
 });
 
 test("ttl", () => {
-  const str = readFileSync(new URL("fixtures/ttl.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    $ORIGIN ttlzone.com
+    $TTL 60
+
+    ;; SOA Records
+    @	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	IN	A	1.2.3.4	; a comment
+    mx	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	IN	AAAA	2001:db8::1
+    mx	120	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   expect(parseZoned.records.length).toEqual(5);
   for (const record of parseZoned.records) {
@@ -78,35 +135,109 @@ test("ttl", () => {
 });
 
 test("header", () => {
-  const str = readFileSync(new URL("fixtures/header.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; This is a
+    ;;
+    ;; header message
+
+    $ORIGIN headerzone.com.
+    $TTL 60
+
+    ;; SOA Records
+    @	60	IN	SOA	headerzone.com root.headerzone.com 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	60	IN	A	1.2.3.4	; a comment
+    mx	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	60	IN	AAAA	2001:db8::1
+    mx	120	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("replaceOrigin", () => {
-  const str = readFileSync(new URL("fixtures/origin.txt", import.meta.url), "utf8");
+  const str = dedent`
+    $ORIGIN originzone.com.
+
+    ;; SOA Records
+    @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	60	IN	A	1.2.3.4	; a comment
+    mx	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	120	IN	AAAA	2001:db8::1
+    mx	120	IN	AAAA	2001:db8::1
+
+  `;
   const replaceOrigin = "another.com";
   const parseZoned = parseZone(str, {replaceOrigin});
   expect(parseZoned.origin).toEqual(replaceOrigin);
 });
 
 test("nosections", () => {
-  const str = readFileSync(new URL("fixtures/nosections.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; This is a
+    ;;
+    ;; header message
+
+    nosectionszone.com.	3600	IN	SOA	nosectionszone.com. root.nosectionszone.com. 2031242781 7200 3600 86400 3600
+    nosectionszone.com.	120	IN	AAAA	2001:db8::1
+    nosectionszone.com.	120	IN	CAA	0 issue "nosectionszone.com"
+    nosectionszone.com.	120	IN	MX	10 mx.nosectionszone.com.
+    nosectionszone.com.	120	IN	MX	10 mx2.nosectionszone.com.
+    nosectionszone.com.	120	IN	MX	10 mx3.nosectionszone.com.
+    nosectionszone.com.	120	IN	TXT	"first record"
+    nosectionszone.com.	120	IN	TXT	"second record"
+    nosectionszone.com.	120	IN	TXT	"third record"
+    nosectionszone.com.	60	IN	A	1.2.3.4	; a comment
+    cname1.nosectionszone.com.	120	IN	CNAME	nosectionszone.com.
+    cname2.nosectionszone.com.	120	IN	CNAME	nosectionszone.com.
+    mx.nosectionszone.com.	120	IN	AAAA	2001:db8::1
+    mx.nosectionszone.com.	60	IN	A	1.2.3.4	; another comment
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned, {sections: false});
   expect(roundtripped).toEqual(str);
 });
 
 test("noname", () => {
-  const str = readFileSync(new URL("fixtures/noname.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    nonamezone.com.	3600	IN	SOA	nonamezone.com. root.nonamezone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    	60	IN	A	1.2.3.4	; a comment
+    	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    	120	IN	AAAA	2001:db8::1
+    	120	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("nottl", () => {
-  const str = readFileSync(new URL("fixtures/nottl.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    @	IN	SOA	nottlzone. root.notttlzone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    60	IN	A	1.2.3.4	; no name
+    mx	IN	A	1.2.3.4	; no ttl
+        IN	A	1.2.3.4	; no name and ttl
+
+  `}\n`;
   const parseZoned = parseZone(str);
   for (const record of parseZoned.records) {
     expect(typeof record.name).toEqual("string");
@@ -118,7 +249,22 @@ test("nottl", () => {
 });
 
 test("ttlunits", () => {
-  const str = readFileSync(new URL("fixtures/ttlunits.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    $ORIGIN ttlzone.com
+    $TTL 1h
+
+    ;; SOA Records
+    @	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	2h	IN	A	1.2.3.4	; a comment
+    mx	5M	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	1W	IN	AAAA	2001:db8::1
+    mx	2s	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   for (const record of parseZoned.records) {
     if (record.type === "SOA") {
@@ -134,29 +280,117 @@ test("ttlunits", () => {
 });
 
 test("semicontent", () => {
-  const str = readFileSync(new URL("fixtures/semicontent.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    semicontent.com.	3600	IN	SOA	semicontent.com. root.semicontent.com. 2031242781 7200 3600 86400 3600	; soa record
+
+    ;; TXT Records
+    @	3600	IN	TXT	"v=spf1 -all 2001::db8"	; txt record
+    _dmarc	3600	IN	TXT	"v=DMARC1; p=reject; sp=reject; rua=mailto:admin@semicontent.com ruf=admin@semicontent.com"	; txt record
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("dash", () => {
-  const str = readFileSync(new URL("fixtures/dash.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    dash-zone.net.	3600	IN	SOA	dash-zone.net. root.dash-zone.net. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    dash-zone.net.	60	IN	A	1.2.3.4	; a comment
+    mx.dash-zone.net.	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    dash-zone.net.	120	IN	AAAA	2001:db8::1
+    mx.dash-zone.net.	120	IN	AAAA	2001:db8::1
+
+    ;; CAA Records
+    dash-zone.net.	120	IN	CAA	0 issue "dash-zone.net"
+
+    ;; CNAME Records
+    cname1.dash-zone.net.	120	IN	CNAME	dash-zone.net.
+    cname2.dash-zone.net.	120	IN	CNAME	dash-zone.net.
+
+    ;; MX Records
+    dash-zone.net.	120	IN	MX	10 mx.dash-zone.net.
+    dash-zone.net.	120	IN	MX	10 mx3.dash-zone.net.
+    dash-zone.net.	120	IN	MX	10 mx2.dash-zone.net.
+
+    ;; TXT Records
+    dash-zone.net.	120	IN	TXT	"first record"
+    dash-zone.net.	120	IN	TXT	"second record"
+    dash-zone.net.	120	IN	TXT	"third record"
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("wildcard", () => {
-  const str = readFileSync(new URL("fixtures/wildcard.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    wildcard-zone.net.	3600	IN	SOA	wildcard-zone.net. root.wildcard-zone.net. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    *.wildcard-zone.net.	60	IN	A	1.2.3.4	; a comment
+    mx.wildcard-zone.net.	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    *.wildcard-zone.net.	120	IN	AAAA	2001:db8::1
+    mx.wildcard-zone.net.	120	IN	AAAA	2001:db8::1
+
+    ;; CAA Records
+    *.wildcard-zone.net.	120	IN	CAA	0 issue "wildcard-zone.net"
+
+    ;; CNAME Records
+    cname1.wildcard-zone.net.	120	IN	CNAME	wildcard-zone.net.
+    cname2.wildcard-zone.net.	120	IN	CNAME	wildcard-zone.net.
+
+    ;; MX Records
+    wildcard-zone.net.	120	IN	MX	10 mx.wildcard-zone.net.
+    wildcard-zone.net.	120	IN	MX	10 mx3.wildcard-zone.net.
+    wildcard-zone.net.	120	IN	MX	10 mx2.wildcard-zone.net.
+
+    ;; TXT Records
+    wildcard-zone.net.	120	IN	TXT	"first record"
+    wildcard-zone.net.	120	IN	TXT	"second record"
+    wildcard-zone.net.	120	IN	TXT	"third record"
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("dots", () => {
-  const dotsstr = readFileSync(new URL("fixtures/dots.txt", import.meta.url), "utf8");
-  const nodotsstr = readFileSync(new URL("fixtures/nodots.txt", import.meta.url), "utf8");
+  const dotsstr = `${dedent`
+    ;; SOA Records
+    dot-zone.net.	3600	IN	SOA	dot-zone.net. root.dot-zone.net. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    a.dot-zone.net.	120	IN	A	1.2.3.4
+
+    ;; CNAME Records
+    cname1.dot-zone.net.	120	IN	CNAME	dot-zone.net.
+    cname2.dot-zone.net.	120	IN	CNAME	dot-zone.net.
+
+  `}\n`;
+  const nodotsstr = `${dedent`
+    ;; SOA Records
+    dot-zone.net.	3600	IN	SOA	dot-zone.net root.dot-zone.net 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    a.dot-zone.net.	120	IN	A	1.2.3.4
+
+    ;; CNAME Records
+    cname1.dot-zone.net.	120	IN	CNAME	dot-zone.net
+    cname2.dot-zone.net.	120	IN	CNAME	dot-zone.net
+
+  `}\n`;
   expect(stringifyZone(parseZone(dotsstr, {dots: false}), {dots: false})).toEqual(dotsstr);
   expect(stringifyZone(parseZone(dotsstr, {dots: false}), {dots: true})).toEqual(dotsstr);
   expect(stringifyZone(parseZone(dotsstr, {dots: true}), {dots: true})).toEqual(dotsstr);
@@ -166,14 +400,37 @@ test("dots", () => {
 });
 
 test("comments", () => {
-  const str = readFileSync(new URL("fixtures/comments.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; SOA Records
+    commentzone.com.	3600	IN	SOA	commentzone.com. root.commentzone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    commentzone.com.	60	IN	A	1.2.3.4	; a comment ; with semicolon
+    mx.commentzone.com.	60	IN	A	1.2.3.4	; another comment
+    mx.commentzone.com.	60	IN	A	1.2.3.4	; another comment; more "stuff"; with "semi; colons"
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("soa parens", () => {
-  const str = readFileSync(new URL("fixtures/soaparens.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    $ORIGIN originzone.com.
+
+    ;; SOA Records
+    @	3600	IN	SOA	originzone.com. root.originzone.com. (2031242781 7200 3600 86400 3600)
+
+    ;; A Records
+    @	60	IN	A	1.2.3.4	; a comment
+    mx	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    @	120	IN	AAAA	2001:db8::1
+    mx	120	IN	AAAA	2001:db8::1
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
@@ -181,7 +438,18 @@ test("soa parens", () => {
 
 test("multiline soa", () => {
   // Test parsing multi-line SOA record from fixture file
-  const multilineSOA = readFileSync(new URL("fixtures/multiline-soa.txt", import.meta.url), "utf8");
+  const multilineSOA = `${dedent`
+    $ORIGIN localhost.
+    @  86400  IN  SOA   @  root (
+                      1999010100 ; serial
+                           10800 ; refresh (3 hours)
+                             900 ; retry (15 minutes)
+                          604800 ; expire (1 week)
+                           86400 ; minimum (1 day)
+                        )
+    @  60  IN  A  127.0.0.1
+
+  `}\n`;
   const parseZoned = parseZone(multilineSOA);
 
   // Verify the SOA record was parsed correctly
@@ -216,6 +484,7 @@ test("multiline soa with comment on first line", () => {
                           604800 ; expire
                            86400 ; minimum
                          )
+
   `;
 
   const parseZoned = parseZone(multilineSOA);
@@ -237,6 +506,7 @@ test("multiline soa with parentheses in comments", () => {
                           604800 ; expire (1 week)
                            86400 ; minimum (1 day)
                          )
+
   `;
 
   const parseZoned = parseZone(multilineSOA);
@@ -260,6 +530,7 @@ test("mixed single-line and multiline records", () => {
                          )
     @  60   IN  A     192.0.2.1
     @  60   IN  AAAA  2001:db8::1
+
   `;
 
   const parseZoned = parseZone(mixed);
@@ -275,14 +546,33 @@ test("mixed single-line and multiline records", () => {
 });
 
 test("type65534", () => {
-  const str = readFileSync(new URL("fixtures/type65534.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    ;; A Records
+    sub.typezone.com.	3600	IN	A	1.2.3.4
+
+    ;; TYPE65534 Records
+    typezone.com.	0	IN	TYPE65534	\# 5 0472C10000
+    typezone.com.	0	IN	TYPE65534	\# 5 048A880001
+    typezone.com.	0	IN	TYPE65534	\# 5 0493E10001
+
+  `}\n`;
   const parseZoned = parseZone(str);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
 
 test("inoptional", () => {
-  const str = readFileSync(new URL("fixtures/inoptional.txt", import.meta.url), "utf8");
+  const str = `${dedent`
+    example.com.	300	A	1.2.3.4
+    example.com.	600	MX	10 mail.example.com.
+    example.com.	172800	NS	foo.com.
+    example.com.	172800	NS	bar.com.
+    example.com.	300	TXT	"test"
+    _dmarc.example.com.	300	CNAME	foo.com.
+    _sip._tcp.example.com.	600	SRV	0 0 5060 sip.foo.com.
+    _sips._tcp.example.com.	600	SRV	0 0 5061 sips.foo.com.
+
+  `}\n`;
   const parseZoned = parseZone(str);
   expect(parseZoned).toMatchInlineSnapshot(`
     {
