@@ -295,8 +295,49 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
 export function parseZone(str: string, {replaceOrigin = null, crlf = false, defaultTTL = 60, defaultClass = "IN", dots = false}: DnszParseOptions = {}): DnszDnsData {
   const data: Partial<DnszDnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
-  const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
+  let lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
+
+  // Combine multi-line records (those with parentheses)
+  const combinedLines: Array<string> = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check if this line starts a multi-line record
+    if (line.includes("(") && !line.includes(")")) {
+      let combined = line;
+      i++;
+
+      // Continue reading lines until we find the closing parenthesis
+      while (i < lines.length) {
+        const nextLine = lines[i];
+
+        // Remove inline comments (those starting with ;)
+        const cleanedLine = nextLine.replace(/;.*$/, "").trim();
+
+        if (cleanedLine) {
+          combined += ` ${cleanedLine}`;
+        }
+
+        i++;
+
+        // Check if the cleaned line (without comments) contains a closing paren
+        if (cleanedLine.includes(")")) {
+          break;
+        }
+      }
+
+      // Remove parentheses and normalize whitespace
+      combined = combined.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+      combinedLines.push(combined);
+    } else {
+      combinedLines.push(line);
+      i++;
+    }
+  }
+
+  lines = combinedLines;
 
   // search for header
   const headerLines: Array<string> = [];

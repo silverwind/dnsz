@@ -178,6 +178,33 @@ test("soa parens", () => {
   expect(roundtripped).toEqual(str);
 });
 
+test("multiline soa", () => {
+  // Test parsing multi-line SOA record with comments
+  const multilineSOA = `$ORIGIN localhost.
+@  86400  IN  SOA   @  root (
+                  1999010100 ; serial
+                       10800 ; refresh (3 hours)
+                         900 ; retry (15 minutes)
+                      604800 ; expire (1 week)
+                       86400 ; minimum (1 day)
+                    )
+@  60  IN  A  127.0.0.1`;
+
+  const parseZoned = parseZone(multilineSOA);
+
+  // Verify the SOA record was parsed correctly
+  expect(parseZoned.records.length).toEqual(2);
+  expect(parseZoned.records[0].type).toEqual("SOA");
+  expect(parseZoned.records[0].content).toEqual("@ root 1999010100 10800 900 604800 86400");
+  expect(parseZoned.records[0].ttl).toEqual(86400);
+  expect(parseZoned.records[1].type).toEqual("A");
+
+  // The stringifier should output single-line format
+  const roundtripped = stringifyZone(parseZoned);
+  const expectedOutput = readFileSync(new URL("fixtures/multiline-soa.txt", import.meta.url), "utf8");
+  expect(roundtripped).toEqual(expectedOutput);
+});
+
 test("type65534", () => {
   const str = readFileSync(new URL("fixtures/type65534.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(str);
