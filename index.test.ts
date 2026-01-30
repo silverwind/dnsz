@@ -179,17 +179,8 @@ test("soa parens", () => {
 });
 
 test("multiline soa", () => {
-  // Test parsing multi-line SOA record with comments
-  const multilineSOA = `$ORIGIN localhost.
-@  86400  IN  SOA   @  root (
-                  1999010100 ; serial
-                       10800 ; refresh (3 hours)
-                         900 ; retry (15 minutes)
-                      604800 ; expire (1 week)
-                       86400 ; minimum (1 day)
-                    )
-@  60  IN  A  127.0.0.1`;
-
+  // Test parsing multi-line SOA record from fixture file
+  const multilineSOA = readFileSync(new URL("fixtures/multiline-soa.txt", import.meta.url), "utf8");
   const parseZoned = parseZone(multilineSOA);
 
   // Verify the SOA record was parsed correctly
@@ -201,8 +192,16 @@ test("multiline soa", () => {
 
   // The stringifier should output single-line format
   const roundtripped = stringifyZone(parseZoned);
-  const expectedOutput = readFileSync(new URL("fixtures/multiline-soa.txt", import.meta.url), "utf8");
-  expect(roundtripped).toEqual(expectedOutput);
+  expect(roundtripped).toMatchInlineSnapshot(`
+    "$ORIGIN localhost.
+
+    ;; SOA Records
+    @	86400	IN	SOA	@ root 1999010100 10800 900 604800 86400
+
+    ;; A Records
+    @	60	IN	A	127.0.0.1
+    "
+  `);
 });
 
 test("multiline soa with comment on first line", () => {

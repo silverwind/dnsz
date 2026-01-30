@@ -1,7 +1,9 @@
 $ORIGIN localhost.
-
-;; SOA Records
-@	86400	IN	SOA	@ root 1999010100 10800 900 604800 86400
-
-;; A Records
-@	60	IN	A	127.0.0.1
+@  86400  IN  SOA   @  root (
+                  1999010100 ; serial
+                       10800 ; refresh (3 hours)
+                         900 ; retry (15 minutes)
+                      604800 ; expire (1 week)
+                       86400 ; minimum (1 day)
+                    )
+@  60  IN  A  127.0.0.1
