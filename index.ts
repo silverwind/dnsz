@@ -306,15 +306,20 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
     // Check if this line starts a multi-line record
     if (line.includes("(") && !line.includes(")")) {
-      let combined = line;
+      // Strip comment from the first line before starting combination
+      const [firstLineContent] = splitContentAndComment(line);
+      let combined = firstLineContent || "";
       i++;
+
+      let foundClosing = false;
 
       // Continue reading lines until we find the closing parenthesis
       while (i < lines.length) {
         const nextLine = lines[i];
 
-        // Remove inline comments (those starting with ;)
-        const cleanedLine = nextLine.replace(/;.*$/, "").trim();
+        // Use proper comment stripping that respects quoted strings
+        const [cleanedContent] = splitContentAndComment(nextLine);
+        const cleanedLine = (cleanedContent || "").trim();
 
         if (cleanedLine) {
           combined += ` ${cleanedLine}`;
@@ -324,12 +329,20 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
         // Check if the cleaned line (without comments) contains a closing paren
         if (cleanedLine.includes(")")) {
+          foundClosing = true;
           break;
         }
       }
 
-      // Remove parentheses and normalize whitespace
-      combined = combined.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+      // If we didn't find a closing parenthesis, still process the line but it may be malformed
+      // This allows the parser to be lenient with malformed input
+      if (!foundClosing && combined.includes("(")) {
+        // Remove only the opening parenthesis if no closing was found
+        combined = combined.replace(/\(/g, "").replace(/\s+/g, " ").trim();
+      } else {
+        // Remove both parentheses and normalize whitespace
+        combined = combined.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
+      }
       combinedLines.push(combined);
     } else {
       combinedLines.push(line);
