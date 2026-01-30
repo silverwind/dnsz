@@ -15,6 +15,7 @@
   ],
   "devDependencies": {
     "@types/node": "24.10.1",
+    "dedent": "1.7.1",
     "eslint": "9.39.1",
     "eslint-config-silverwind": "112.0.1",
     "tsdown": "0.16.7",

@@ -1,5 +1,6 @@
 import {parseZone, stringifyZone} from "./index.ts";
 import {readFileSync} from "node:fs";
+import dedent from "dedent";
 
 test("roundtrip", () => {
   const str = readFileSync(new URL("fixtures/simple.txt", import.meta.url), "utf8");
@@ -206,14 +207,16 @@ test("multiline soa", () => {
 
 test("multiline soa with comment on first line", () => {
   // Test with comment after opening parenthesis
-  const multilineSOA = `$ORIGIN example.com.
-@  3600  IN  SOA   ns1.example.com. admin.example.com. ( ; SOA record
-                  2024010100 ; serial
-                       10800 ; refresh
-                         900 ; retry
-                      604800 ; expire
-                       86400 ; minimum
-                    )`;
+  const multilineSOA = dedent`
+    $ORIGIN example.com.
+    @  3600  IN  SOA   ns1.example.com. admin.example.com. ( ; SOA record
+                      2024010100 ; serial
+                           10800 ; refresh
+                             900 ; retry
+                          604800 ; expire
+                           86400 ; minimum
+                         )
+  `;
 
   const parseZoned = parseZone(multilineSOA);
 
@@ -225,14 +228,16 @@ test("multiline soa with comment on first line", () => {
 
 test("multiline soa with parentheses in comments", () => {
   // Test that parentheses in comments don't interfere
-  const multilineSOA = `$ORIGIN example.com.
-@  3600  IN  SOA   ns1.example.com. admin.example.com. (
-                  2024010100 ; serial (version)
-                       10800 ; refresh (3 hours)
-                         900 ; retry (15 minutes)
-                      604800 ; expire (1 week)
-                       86400 ; minimum (1 day)
-                    )`;
+  const multilineSOA = dedent`
+    $ORIGIN example.com.
+    @  3600  IN  SOA   ns1.example.com. admin.example.com. (
+                      2024010100 ; serial (version)
+                           10800 ; refresh (3 hours)
+                             900 ; retry (15 minutes)
+                          604800 ; expire (1 week)
+                           86400 ; minimum (1 day)
+                         )
+  `;
 
   const parseZoned = parseZone(multilineSOA);
 
@@ -244,16 +249,18 @@ test("multiline soa with parentheses in comments", () => {
 
 test("mixed single-line and multiline records", () => {
   // Test a zone file with both formats
-  const mixed = `$ORIGIN example.com.
-@  3600  IN  SOA   ns1.example.com. admin.example.com. (
-                  2024010100
-                       10800
-                         900
-                      604800
-                       86400
-                    )
-@  60   IN  A     192.0.2.1
-@  60   IN  AAAA  2001:db8::1`;
+  const mixed = dedent`
+    $ORIGIN example.com.
+    @  3600  IN  SOA   ns1.example.com. admin.example.com. (
+                      2024010100
+                           10800
+                             900
+                          604800
+                           86400
+                         )
+    @  60   IN  A     192.0.2.1
+    @  60   IN  AAAA  2001:db8::1
+  `;
 
   const parseZoned = parseZone(mixed);
 
