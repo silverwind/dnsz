@@ -295,8 +295,37 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
 export function parseZone(str: string, {replaceOrigin = null, crlf = false, defaultTTL = 60, defaultClass = "IN", dots = false}: DnszParseOptions = {}): DnszDnsData {
   const data: Partial<DnszDnsData> = {};
   const rawLines = str.split(/\r?\n/).map(l => l.trim());
-  const lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
+  let lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
+
+  // mulitline SOA support
+  const combinedLines: Array<string> = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.includes("(") && !line.includes(")")) {
+      const [firstLineContent] = splitContentAndComment(line);
+      let combined = firstLineContent || "";
+      let foundClosing = false;
+      i++;
+      while (i < lines.length) {
+        const [cleanedContent] = splitContentAndComment(lines[i]);
+        const cleanedLine = (cleanedContent || "").trim();
+        if (cleanedLine) combined += ` ${cleanedLine}`;
+        i++;
+        if (cleanedLine.includes(")")) {
+          foundClosing = true;
+          break;
+        }
+      }
+      combined = combined.replace(foundClosing ? /[()]/g : /\(/g, "").replace(/\s+/g, " ").trim();
+      combinedLines.push(combined);
+    } else {
+      combinedLines.push(line);
+      i++;
+    }
+  }
+  lines = combinedLines;
 
   // search for header
   const headerLines: Array<string> = [];

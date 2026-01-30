@@ -1,7 +1,0 @@
-;; A Records
-sub.typezone.com.	3600	IN	A	1.2.3.4
-
-;; TYPE65534 Records
-typezone.com.	0	IN	TYPE65534	\# 5 0472C10000
-typezone.com.	0	IN	TYPE65534	\# 5 048A880001
-typezone.com.	0	IN	TYPE65534	\# 5 0493E10001
