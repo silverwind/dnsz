@@ -298,58 +298,32 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   let lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
 
-  // Combine multi-line records (those with parentheses)
   const combinedLines: Array<string> = [];
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-
-    // Check if this line starts a multi-line record
     if (line.includes("(") && !line.includes(")")) {
-      // Strip comment from the first line before starting combination
       const [firstLineContent] = splitContentAndComment(line);
       let combined = firstLineContent || "";
-      i++;
-
       let foundClosing = false;
-
-      // Continue reading lines until we find the closing parenthesis
+      i++;
       while (i < lines.length) {
-        const nextLine = lines[i];
-
-        // Use proper comment stripping that respects quoted strings
-        const [cleanedContent] = splitContentAndComment(nextLine);
+        const [cleanedContent] = splitContentAndComment(lines[i]);
         const cleanedLine = (cleanedContent || "").trim();
-
-        if (cleanedLine) {
-          combined += ` ${cleanedLine}`;
-        }
-
+        if (cleanedLine) combined += ` ${cleanedLine}`;
         i++;
-
-        // Check if the cleaned line (without comments) contains a closing paren
         if (cleanedLine.includes(")")) {
           foundClosing = true;
           break;
         }
       }
-
-      // If we didn't find a closing parenthesis, still process the line but it may be malformed
-      // This allows the parser to be lenient with malformed input
-      if (!foundClosing && combined.includes("(")) {
-        // Remove only the opening parenthesis if no closing was found
-        combined = combined.replace(/\(/g, "").replace(/\s+/g, " ").trim();
-      } else {
-        // Remove both parentheses and normalize whitespace
-        combined = combined.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
-      }
+      combined = combined.replace(foundClosing ? /[()]/g : /\(/g, "").replace(/\s+/g, " ").trim();
       combinedLines.push(combined);
     } else {
       combinedLines.push(line);
       i++;
     }
   }
-
   lines = combinedLines;
 
   // search for header
