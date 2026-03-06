@@ -190,17 +190,17 @@ function parseTTL(ttl: string | number, def?: number): number {
   }
 
   if (/s$/i.test(ttl)) {
-    ttl = parseInt(ttl);
+    ttl = Number.parseInt(ttl);
   } else if (/m$/i.test(ttl)) {
-    ttl = parseInt(ttl) * 60;
+    ttl = Number.parseInt(ttl) * 60;
   } else if (/h$/i.test(ttl)) {
-    ttl = parseInt(ttl) * 60 * 60;
+    ttl = Number.parseInt(ttl) * 60 * 60;
   } else if (/d$/i.test(ttl)) {
-    ttl = parseInt(ttl) * 60 * 60 * 24;
+    ttl = Number.parseInt(ttl) * 60 * 60 * 24;
   } else if (/w$/i.test(ttl)) {
-    ttl = parseInt(ttl) * 60 * 60 * 24 * 7;
+    ttl = Number.parseInt(ttl) * 60 * 60 * 24 * 7;
   } else {
-    ttl = parseInt(ttl);
+    ttl = Number.parseInt(ttl);
   }
 
   return ttl;
@@ -346,6 +346,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   }
 
   // https://regex101.com/r/aKuGyZ/3
+  // eslint-disable-next-line regexp/no-misleading-capturing-group
   const reLine = /^([a-z0-9_.\-@*]+)?\s*([0-9]+[smhdw]?)?\s*([a-z]+)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
 
   // create records
