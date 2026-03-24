@@ -461,16 +461,16 @@ test("multiline soa", () => {
 
   // The stringifier should output single-line format
   const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toMatchInlineSnapshot(`
-    "$ORIGIN localhost.
+  expect(roundtripped).toEqual(`${dedent`
+    $ORIGIN localhost.
 
     ;; SOA Records
     @	86400	IN	SOA	@ root 1999010100 10800 900 604800 86400
 
     ;; A Records
     @	60	IN	A	127.0.0.1
-    "
-  `);
+
+  `}\n`);
 });
 
 test("multiline soa with comment on first line", () => {
@@ -574,79 +574,21 @@ test("inoptional", () => {
 
   `}\n`;
   const parseZoned = parseZone(str);
-  expect(parseZoned).toMatchInlineSnapshot(`
-    {
-      "records": [
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "1.2.3.4",
-          "name": "example.com",
-          "ttl": 300,
-          "type": "A",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "10 mail.example.com.",
-          "name": "example.com",
-          "ttl": 600,
-          "type": "MX",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "foo.com.",
-          "name": "example.com",
-          "ttl": 172800,
-          "type": "NS",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "bar.com.",
-          "name": "example.com",
-          "ttl": 172800,
-          "type": "NS",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": ""test"",
-          "name": "example.com",
-          "ttl": 300,
-          "type": "TXT",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "foo.com.",
-          "name": "_dmarc.example.com",
-          "ttl": 300,
-          "type": "CNAME",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "0 0 5060 sip.foo.com.",
-          "name": "_sip._tcp.example.com",
-          "ttl": 600,
-          "type": "SRV",
-        },
-        {
-          "class": "IN",
-          "comment": null,
-          "content": "0 0 5061 sips.foo.com.",
-          "name": "_sips._tcp.example.com",
-          "ttl": 600,
-          "type": "SRV",
-        },
-      ],
-    }
-  `);
+  expect(parseZoned).toEqual({
+    records: [
+      {class: "IN", comment: null, content: "1.2.3.4", name: "example.com", ttl: 300, type: "A"},
+      {class: "IN", comment: null, content: "10 mail.example.com.", name: "example.com", ttl: 600, type: "MX"},
+      {class: "IN", comment: null, content: "foo.com.", name: "example.com", ttl: 172800, type: "NS"},
+      {class: "IN", comment: null, content: "bar.com.", name: "example.com", ttl: 172800, type: "NS"},
+      {class: "IN", comment: null, content: `"test"`, name: "example.com", ttl: 300, type: "TXT"},
+      {class: "IN", comment: null, content: "foo.com.", name: "_dmarc.example.com", ttl: 300, type: "CNAME"},
+      {class: "IN", comment: null, content: "0 0 5060 sip.foo.com.", name: "_sip._tcp.example.com", ttl: 600, type: "SRV"},
+      {class: "IN", comment: null, content: "0 0 5061 sips.foo.com.", name: "_sips._tcp.example.com", ttl: 600, type: "SRV"},
+    ],
+  });
   const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toMatchInlineSnapshot(`
-    ";; A Records
+  expect(roundtripped).toEqual(`${dedent`
+    ;; A Records
     example.com.	300	IN	A	1.2.3.4
 
     ;; CNAME Records
@@ -665,6 +607,6 @@ test("inoptional", () => {
 
     ;; TXT Records
     example.com.	300	IN	TXT	"test"
-    "
-  `);
+
+  `}\n`);
 });
