@@ -180,13 +180,19 @@ function addDots(content: string, indexes: Array<number>): string {
   return parts.join(" ");
 }
 
+const MAX_TTL = 2147483647;
+
+function clampTTL(value: number): number {
+  return Math.min(Math.max(0, value), MAX_TTL);
+}
+
 function parseTTL(ttl: string | number, def?: number): number {
   if (typeof ttl === "number") {
-    return ttl;
+    return clampTTL(ttl);
   }
 
   if (def && !ttl) {
-    return def;
+    return clampTTL(def);
   }
 
   if (/s$/i.test(ttl)) {
@@ -203,7 +209,7 @@ function parseTTL(ttl: string | number, def?: number): number {
     ttl = Number.parseInt(ttl);
   }
 
-  return ttl;
+  return clampTTL(ttl);
 }
 
 type FormatOpts = {
@@ -294,22 +300,23 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
 /** Parse a string of a DNS zone file and returns a `data` object. */
 export function parseZone(str: string, {replaceOrigin = null, crlf = false, defaultTTL = 60, defaultClass = "IN", dots = false}: DnszParseOptions = {}): DnszDnsData {
   const data: Partial<DnszDnsData> = {};
-  const rawLines = str.split(/\r?\n/).map(l => l.trim());
-  let lines = rawLines.filter(l => Boolean(l) && !l.startsWith(";"));
+  const rawLines = str.split(/\r?\n/);
+  const trimmedRawLines = rawLines.map(l => l.trim());
+  let lines = trimmedRawLines.map((text, i) => ({text, inherited: /^\s/.test(rawLines[i])})).filter(({text}) => Boolean(text) && !text.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
 
-  // mulitline SOA support
-  const combinedLines: Array<string> = [];
+  // multiline record support (RFC 1035 §5.1)
+  const combinedLines: typeof lines = [];
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i];
+    const {text: line, inherited} = lines[i];
     if (line.includes("(") && !line.includes(")")) {
       const [firstLineContent] = splitContentAndComment(line);
       let combined = firstLineContent || "";
       let foundClosing = false;
       i++;
       while (i < lines.length) {
-        const [cleanedContent] = splitContentAndComment(lines[i]);
+        const [cleanedContent] = splitContentAndComment(lines[i].text);
         const cleanedLine = (cleanedContent || "").trim();
         if (cleanedLine) combined += ` ${cleanedLine}`;
         i++;
@@ -318,10 +325,16 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
           break;
         }
       }
-      combined = combined.replace(foundClosing ? /[()]/g : /\(/g, "").replace(/\s+/g, " ").trim();
-      combinedLines.push(combined);
+      if (foundClosing) {
+        const openIdx = combined.indexOf("(");
+        const closeIdx = combined.lastIndexOf(")");
+        combined = (combined.substring(0, openIdx) + combined.substring(openIdx + 1, closeIdx) + combined.substring(closeIdx + 1)).replace(/\s+/g, " ").trim();
+      } else {
+        combined = combined.replace("(", "").replace(/\s+/g, " ").trim();
+      }
+      combinedLines.push({text: combined, inherited});
     } else {
-      combinedLines.push(line);
+      combinedLines.push({text: line, inherited});
       i++;
     }
   }
@@ -330,11 +343,11 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   // search for header
   const headerLines: Array<string> = [];
   let valid: boolean = false;
-  for (const [index, line] of rawLines.entries()) {
+  for (const [index, line] of trimmedRawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
     } else {
-      const prev = rawLines[index - 1];
+      const prev = trimmedRawLines[index - 1];
       if (line === "" && index > 1 && prev.startsWith(";;")) {
         valid = true;
         break;
@@ -345,20 +358,21 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
     data.header = headerLines.join(newline);
   }
 
-  // https://regex101.com/r/aKuGyZ/3
   // eslint-disable-next-line regexp/no-misleading-capturing-group
-  const reLine = /^([a-z0-9_.\-@*]+)?\s*([0-9]+[smhdw]?)?\s*([a-z]+)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
+  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*([0-9]+[smhdw]?)?\s*([a-z]+)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
 
   // create records
   data.records = [];
-  for (const line of lines) {
+  let prevName = "";
+  let prevClass = defaultClass;
+  for (const {text: line, inherited} of lines) {
     const parsedOrigin = (/\$ORIGIN\s+(\S+)/.exec(line) || [])[1];
-    if (parsedOrigin && !data.origin) {
+    if (parsedOrigin) {
       data.origin = normalize(parsedOrigin);
     }
 
     const parsedTtl = (/\$TTL\s+(\S+)/.exec(line) || [])[1];
-    if (line.startsWith("$TTL ") && !data.ttl) {
+    if (line.startsWith("$TTL ")) {
       data.ttl = parseTTL(normalize(parsedTtl));
     }
 
@@ -372,7 +386,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
       cls = "";
     }
     if (!cls) {
-      cls = defaultClass;
+      cls = prevClass;
     }
     let [content, comment] = splitContentAndComment(contentAndComment);
 
@@ -385,15 +399,32 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
     }
 
     type = type.toUpperCase();
+    cls = cls.toUpperCase();
     content = (content || "").trim();
     if (dots && Object.keys(nameLike).includes(type)) {
       content = addDots(content, nameLike[type as keyof typeof nameLike]);
     }
 
+    // Resolve name: inheritance, then relative-to-origin (RFC 1035 §5.1)
+    const isAbsolute = name.endsWith(".");
+    let resolvedName: string;
+    if (inherited && prevName) {
+      resolvedName = prevName;
+    } else if ((!name || name === "@") && data.origin) {
+      resolvedName = data.origin;
+    } else if (name && name !== "@" && !isAbsolute && data.origin) {
+      resolvedName = `${normalize(name)}.${data.origin}`;
+    } else {
+      resolvedName = normalize(name);
+    }
+
+    prevName = resolvedName;
+    prevClass = cls;
+
     data.records.push({
-      name: normalize((["", "@"].includes(name) && data.origin) ? data.origin : name),
+      name: resolvedName,
       ttl: parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL),
-      class: cls.toUpperCase(),
+      class: cls,
       type,
       content,
       comment: (comment || "").trim() || null,

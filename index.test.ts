@@ -223,8 +223,24 @@ test("noname", () => {
 
   `}\n`;
   const parseZoned = parseZone(str);
+  // RFC 1035 §5.1: blank owner inherits from previous record
+  for (const record of parseZoned.records) {
+    expect(record.name).toEqual("nonamezone.com");
+  }
   const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
+  expect(roundtripped).toEqual(`${dedent`
+    ;; SOA Records
+    nonamezone.com.	3600	IN	SOA	nonamezone.com. root.nonamezone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    nonamezone.com.	60	IN	A	1.2.3.4	; a comment
+    nonamezone.com.	60	IN	A	1.2.3.4	; another comment
+
+    ;; AAAA Records
+    nonamezone.com.	120	IN	AAAA	2001:db8::1
+    nonamezone.com.	120	IN	AAAA	2001:db8::1
+
+  `}\n`);
 });
 
 test("nottl", () => {
@@ -609,4 +625,162 @@ test("inoptional", () => {
     example.com.	300	IN	TXT	"test"
 
   `}\n`);
+});
+
+test("name inheritance", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    @  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
+    @  60    IN  A    192.0.2.1
+             60  IN  A    192.0.2.2
+             60  IN  AAAA 2001:db8::1
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records.length).toEqual(4);
+  for (const record of parseZoned.records) {
+    expect(record.name).toEqual("example.com");
+  }
+});
+
+test("relative name resolution", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    @    3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
+    www  60    IN  A    192.0.2.1
+    mail 60    IN  A    192.0.2.2
+    example.com. 60 IN A 192.0.2.3
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[1].name).toEqual("www.example.com");
+  expect(parseZoned.records[2].name).toEqual("mail.example.com");
+  expect(parseZoned.records[3].name).toEqual("example.com");
+});
+
+test("multiple origin", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    www  60  IN  A  192.0.2.1
+    $ORIGIN sub.example.com.
+    www  60  IN  A  192.0.2.2
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].name).toEqual("www.example.com");
+  expect(parseZoned.records[1].name).toEqual("www.sub.example.com");
+  expect(parseZoned.origin).toEqual("sub.example.com");
+});
+
+test("multiple ttl", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    $TTL 60
+    @  IN  A  192.0.2.1
+    $TTL 120
+    @  IN  A  192.0.2.2
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].ttl).toEqual(60);
+  expect(parseZoned.records[1].ttl).toEqual(120);
+  expect(parseZoned.ttl).toEqual(120);
+});
+
+test("ttl clamping", () => {
+  const str = dedent`
+    example.com.  9999999999  IN  A  192.0.2.1
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].ttl).toEqual(2147483647);
+});
+
+test("class inheritance", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    @  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
+    @  60    IN  A    192.0.2.1
+    @  60         A   192.0.2.2
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[2].class).toEqual("IN");
+});
+
+test("extended name characters", () => {
+  const str = dedent`
+    128/26.0.168.192.in-addr.arpa.  3600  IN  PTR  host.example.com.
+    tag+test.example.com.  60  IN  A  192.0.2.1
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].name).toEqual("128/26.0.168.192.in-addr.arpa");
+  expect(parseZoned.records[0].type).toEqual("PTR");
+  expect(parseZoned.records[1].name).toEqual("tag+test.example.com");
+
+  const backslashStr = "host\\032name.example.com.\t60\tIN\tA\t192.0.2.1";
+  const parsed2 = parseZone(backslashStr);
+  expect(parsed2.records[0].name).toEqual("host\\032name.example.com");
+});
+
+test("relative name with dots", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    @       3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
+    sub.www  60   IN  A    192.0.2.1
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[1].name).toEqual("sub.www.example.com");
+});
+
+test("relative name resolution roundtrip", () => {
+  const input = `${dedent`
+    $ORIGIN example.com.
+
+    ;; A Records
+    www	60	IN	A	192.0.2.1
+    mail	60	IN	A	192.0.2.2
+
+  `}\n`;
+  const parseZoned = parseZone(input);
+  expect(parseZoned.records[0].name).toEqual("www.example.com");
+  expect(parseZoned.records[1].name).toEqual("mail.example.com");
+  const roundtripped = stringifyZone(parseZoned);
+  expect(roundtripped).toEqual(input);
+});
+
+test("name inheritance across directives", () => {
+  const str = dedent`
+    $ORIGIN example.com.
+    www  60  IN  A  192.0.2.1
+    $TTL 120
+         60  IN  A  192.0.2.2
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].name).toEqual("www.example.com");
+  expect(parseZoned.records[1].name).toEqual("www.example.com");
+});
+
+test("class inheritance chain", () => {
+  const str = dedent`
+    example.com.  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
+    example.com.  60         A   192.0.2.1
+    example.com.  60         A   192.0.2.2
+    example.com.  60         AAAA 2001:db8::1
+  `;
+  const parseZoned = parseZone(str);
+  for (const record of parseZoned.records) {
+    expect(record.class).toEqual("IN");
+  }
+});
+
+test("multiline non-soa record", () => {
+  const str = dedent`
+    example.com.  3600  IN  TXT  ("v=spf1"
+                                  " include:example.com"
+                                  " -all")
+  `;
+  const parseZoned = parseZone(str);
+  expect(parseZoned.records[0].type).toEqual("TXT");
+  expect(parseZoned.records[0].content).toEqual(`"v=spf1" " include:example.com" " -all"`);
+});
+
+test("ttl clamping boundaries", () => {
+  expect(parseZone(dedent`example.com. 0 IN A 192.0.2.1`).records[0].ttl).toEqual(0);
+  expect(parseZone(dedent`example.com. 2147483647 IN A 192.0.2.1`).records[0].ttl).toEqual(2147483647);
+  expect(parseZone(dedent`example.com. 2147483648 IN A 192.0.2.1`).records[0].ttl).toEqual(2147483647);
 });
