@@ -30,7 +30,7 @@
     "vite": "8.0.10",
     "vite-config-silverwind": "7.0.4",
     "vitest": "4.1.5",
-    "vitest-config-silverwind": "11.3.1"
+    "vitest-config-silverwind": "11.3.3"
   },
   "packageManager": "pnpm@10.33.2"
 }
