@@ -71,7 +71,7 @@ function normalize(name: string) {
   if (name.endsWith(".") && name.length > 1) {
     name = name.substring(0, name.length - 1);
   }
-  return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
+  return name.replace(/\.{2,}/g, ".").replace(/@\./g, "@");
 }
 
 function splitString(input: string, {separator = " ", quotes = []}: {separator?: string, quotes?: Array<string>} = {}) {
@@ -81,13 +81,7 @@ function splitString(input: string, {separator = " ", quotes = []}: {separator?:
   let value: string;
   let node: any;
   let i = -1;
-  const state: Record<string, any> = {
-    input,
-    separator,
-    stack,
-    prev: () => string[i - 1],
-    next: () => string[i + 1],
-  };
+  const state: Record<string, any> = {stack};
 
   const block = () => (state.block = stack[stack.length - 1]);
   const peek = () => string[i + 1];
@@ -156,15 +150,43 @@ function splitString(input: string, {separator = " ", quotes = []}: {separator?:
   return node.stash;
 }
 
-function denormalize(name: string) {
-  if (!name.endsWith(".") && name.length > 1) {
-    name = `${name}.`;
+// RFC 1035 §5.1: parens group data across line boundaries and have no
+// other meaning. These helpers ignore parens inside quoted strings.
+function parenDepth(s: string): number {
+  let depth = 0;
+  let inQuote = false;
+  let escaped = false;
+  for (const c of s) {
+    if (escaped) { escaped = false; continue; }
+    if (c === "\\") { escaped = true; continue; }
+    if (c === `"`) { inQuote = !inQuote; continue; }
+    if (inQuote) continue;
+    if (c === "(") depth++;
+    else if (c === ")") depth--;
   }
-  return name.replace(/\.{2,}/g, ".").replace(/@\./, "@");
+  return depth;
 }
 
-function esc(str: string) {
-  return str.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
+function stripParens(s: string): string {
+  if (!s.includes("(") && !s.includes(")")) return s;
+  let out = "";
+  let inQuote = false;
+  let escaped = false;
+  for (const c of s) {
+    if (escaped) { escaped = false; out += c; continue; }
+    if (c === "\\") { escaped = true; out += c; continue; }
+    if (c === `"`) { inQuote = !inQuote; out += c; continue; }
+    if (!inQuote && (c === "(" || c === ")")) continue;
+    out += c;
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
+function denormalize(name: string) {
+  if (name && !name.endsWith(".")) {
+    name = `${name}.`;
+  }
+  return name.replace(/\.{2,}/g, ".").replace(/@\./g, "@");
 }
 
 function addDots(content: string, indexes: Array<number>): string {
@@ -173,7 +195,7 @@ function addDots(content: string, indexes: Array<number>): string {
     separator: " ",
   }).map((s: string) => s.trim()).filter(Boolean);
   for (const index of indexes) {
-    if (!parts[index].endsWith(".")) {
+    if (parts[index] && !parts[index].endsWith(".")) {
       parts[index] += ".";
     }
   }
@@ -186,30 +208,21 @@ function clampTTL(value: number): number {
   return Math.min(Math.max(0, value), MAX_TTL);
 }
 
+const ttlUnit: Record<string, number> = {s: 1, m: 60, h: 3600, d: 86400, w: 604800};
+
 function parseTTL(ttl: string | number, def?: number): number {
   if (typeof ttl === "number") {
     return clampTTL(ttl);
   }
 
-  if (def && !ttl) {
+  if (typeof def === "number" && !ttl) {
     return clampTTL(def);
   }
 
-  if (/s$/i.test(ttl)) {
-    ttl = Number.parseInt(ttl);
-  } else if (/m$/i.test(ttl)) {
-    ttl = Number.parseInt(ttl) * 60;
-  } else if (/h$/i.test(ttl)) {
-    ttl = Number.parseInt(ttl) * 60 * 60;
-  } else if (/d$/i.test(ttl)) {
-    ttl = Number.parseInt(ttl) * 60 * 60 * 24;
-  } else if (/w$/i.test(ttl)) {
-    ttl = Number.parseInt(ttl) * 60 * 60 * 24 * 7;
-  } else {
-    ttl = Number.parseInt(ttl);
-  }
-
-  return clampTTL(ttl);
+  const matches = Array.from(ttl.matchAll(/(\d+)([smhdw]?)/gi));
+  if (!matches.length) return clampTTL(typeof def === "number" ? def : Number.NaN);
+  return clampTTL(matches.reduce((acc, [, num, unit]) =>
+    acc + Number.parseInt(num) * (ttlUnit[unit.toLowerCase()] || 1), 0));
 }
 
 type FormatOpts = {
@@ -226,6 +239,7 @@ function format(records: Array<DnszDnsRecord | undefined>, type: string | null, 
     str += `;; ${type} Records${newline}`;
   }
 
+  const suffix = origin ? `.${origin}` : "";
   for (const record of records || []) {
     if (!record) continue;
     let name = normalize(record.name || "");
@@ -233,26 +247,20 @@ function format(records: Array<DnszDnsRecord | undefined>, type: string | null, 
     if (origin) {
       if (name === origin) {
         name = "@";
-      } else if (name.endsWith(origin)) {
-        // subdomain, remove origin and trailing dots
-        name = normalize(name.replace(new RegExp(`${esc(`${origin}.`)}?$`, "gm"), ""));
+      } else if (name.endsWith(suffix)) {
+        name = name.slice(0, -suffix.length);
       } else {
-        // assume it's a subdomain, remove trailing dots
-        name = normalize(name);
-      }
-    } else {
-      if (name.includes(".")) {
-        // assume it's a fqdn, add trailing dots
         name = denormalize(name);
-      } else {
-        name = normalize(name);
       }
+    } else if (name.includes(".")) {
+      name = denormalize(name);
+    } else {
+      name = normalize(name);
     }
 
     let content = record.content;
-    if (dots && Object.keys(nameLike).includes(record.type)) {
-      const indexes: Array<number> = nameLike[record.type as keyof typeof nameLike];
-      content = addDots(content, indexes);
+    if (dots && record.type in nameLike) {
+      content = addDots(content, nameLike[record.type as keyof typeof nameLike]);
     }
 
     const fields = [
@@ -310,31 +318,20 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   let i = 0;
   while (i < lines.length) {
     const {text: line, inherited} = lines[i];
-    if (line.includes("(") && !line.includes(")")) {
-      const [firstLineContent] = splitContentAndComment(line);
-      let combined = firstLineContent || "";
-      let foundClosing = false;
+    const [firstContent] = splitContentAndComment(line);
+    const head = firstContent || "";
+    if (parenDepth(head) > 0) {
+      let combined = head;
       i++;
-      while (i < lines.length) {
-        const [cleanedContent] = splitContentAndComment(lines[i].text);
-        const cleanedLine = (cleanedContent || "").trim();
-        if (cleanedLine) combined += ` ${cleanedLine}`;
+      while (i < lines.length && parenDepth(combined) > 0) {
+        const [nextContent] = splitContentAndComment(lines[i].text);
+        const next = (nextContent || "").trim();
+        if (next) combined += ` ${next}`;
         i++;
-        if (cleanedLine.includes(")")) {
-          foundClosing = true;
-          break;
-        }
       }
-      if (foundClosing) {
-        const openIdx = combined.indexOf("(");
-        const closeIdx = combined.lastIndexOf(")");
-        combined = (combined.substring(0, openIdx) + combined.substring(openIdx + 1, closeIdx) + combined.substring(closeIdx + 1)).replace(/\s+/g, " ").trim();
-      } else {
-        combined = combined.replace("(", "").replace(/\s+/g, " ").trim();
-      }
-      combinedLines.push({text: combined, inherited});
+      combinedLines.push({text: stripParens(combined), inherited});
     } else {
-      combinedLines.push({text: line, inherited});
+      combinedLines.push({text: stripParens(line), inherited});
       i++;
     }
   }
@@ -346,62 +343,51 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   for (const [index, line] of trimmedRawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
-    } else {
-      const prev = trimmedRawLines[index - 1];
-      if (line === "" && index > 1 && prev.startsWith(";;")) {
-        valid = true;
-        break;
-      }
+    } else if (line === "" && index >= 1 && trimmedRawLines[index - 1]?.startsWith(";;")) {
+      valid = true;
+      break;
     }
   }
   if (valid && headerLines.length) {
     data.header = headerLines.join(newline);
   }
 
-  // eslint-disable-next-line regexp/no-misleading-capturing-group
-  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*([0-9]+[smhdw]?)?\s*([a-z]+)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
+  if (replaceOrigin) data.origin = normalize(replaceOrigin);
 
-  // create records
+  // eslint-disable-next-line regexp/no-misleading-capturing-group
+  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*((?:[0-9]+[smhdw]?)+)?\s*([a-z]+[0-9]*)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
+
   data.records = [];
   let prevName = "";
   let prevClass = defaultClass;
   for (const {text: line, inherited} of lines) {
-    const parsedOrigin = (/\$ORIGIN\s+(\S+)/.exec(line) || [])[1];
-    if (parsedOrigin) {
-      data.origin = normalize(parsedOrigin);
-    }
-
-    const parsedTtl = (/\$TTL\s+(\S+)/.exec(line) || [])[1];
-    if (line.startsWith("$TTL ")) {
-      data.ttl = parseTTL(normalize(parsedTtl));
+    if (line.startsWith("$")) {
+      const parsedOrigin = (/^\$ORIGIN\s+(\S+)/i.exec(line) || [])[1];
+      if (parsedOrigin && !replaceOrigin) data.origin = normalize(parsedOrigin);
+      const parsedTtl = (/^\$TTL\s+(\S+)/i.exec(line) || [])[1];
+      if (parsedTtl) data.ttl = parseTTL(normalize(parsedTtl));
+      continue;
     }
 
     let [, name, ttl, cls, type, contentAndComment] = reLine.exec(line) || [];
-    if (!ttl && name && /[0-9]+/.test(name)) { // no name
+    if (!ttl && name && /^[0-9]/.test(name)) {
       ttl = name;
       name = "";
     }
-    if (cls && !type) { // class is optional
+    if (cls && !type) {
       type = cls;
       cls = "";
     }
-    if (!cls) {
-      cls = prevClass;
-    }
+    if (!cls) cls = prevClass;
     let [content, comment] = splitContentAndComment(contentAndComment);
 
-    if (!name) {
-      name = "";
-    }
-
-    if (!cls || !type || !content) {
-      continue;
-    }
+    if (!name) name = "";
+    if (!cls || !type || !content) continue;
 
     type = type.toUpperCase();
     cls = cls.toUpperCase();
     content = (content || "").trim();
-    if (dots && Object.keys(nameLike).includes(type)) {
+    if (dots && type in nameLike) {
       content = addDots(content, nameLike[type as keyof typeof nameLike]);
     }
 
@@ -418,12 +404,14 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
       resolvedName = normalize(name);
     }
 
+    if (!resolvedName) continue;
+
     prevName = resolvedName;
     prevClass = cls;
 
     data.records.push({
       name: resolvedName,
-      ttl: parseTTL(ttl, data.ttl !== undefined ? data.ttl : defaultTTL),
+      ttl: parseTTL(ttl, data.ttl ?? defaultTTL),
       class: cls,
       type,
       content,
@@ -462,7 +450,7 @@ export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true,
 
   const vars: Array<string> = [];
   if (data.origin) vars.push(`$ORIGIN ${denormalize(data.origin)}`);
-  if (data.ttl) vars.push(`$TTL ${data.ttl}`);
+  if (data.ttl !== undefined) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
 
   const origin = normalize(data.origin || "");

@@ -55,8 +55,8 @@ Parse a `data` object and return a string with the zone file contents.
 If `data.origin` is specified, the following things happen in the zone file output:
 
 - A `$ORIGIN` variable is added.
-- All occurences of `data.origin` within `content` are replaced with `@`.
 - If `data.origin` matches the `name` of a `record`, `name` is replaced with `@`.
+- Names ending in `.${data.origin}` are emitted as relative names (origin suffix stripped).
 
 ### Example zone file
 

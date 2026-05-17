@@ -432,7 +432,9 @@ test("comments", () => {
 });
 
 test("soa parens", () => {
-  const str = `${dedent`
+  // RFC 1035 §5.1: parens are line-continuation markers only and carry no
+  // semantic meaning. They must be stripped from content even on a single line.
+  const input = `${dedent`
     $ORIGIN originzone.com.
 
     ;; SOA Records
@@ -440,16 +442,20 @@ test("soa parens", () => {
 
     ;; A Records
     @	60	IN	A	1.2.3.4	; a comment
-    mx	60	IN	A	1.2.3.4	; another comment
+  `}\n`;
+  const stripped = `${dedent`
+    $ORIGIN originzone.com.
 
-    ;; AAAA Records
-    @	120	IN	AAAA	2001:db8::1
-    mx	120	IN	AAAA	2001:db8::1
+    ;; SOA Records
+    @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+
+    ;; A Records
+    @	60	IN	A	1.2.3.4	; a comment
 
   `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
+  const parseZoned = parseZone(input);
+  expect(parseZoned.records[0].content).toEqual("originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600");
+  expect(stringifyZone(parseZoned)).toEqual(stripped);
 });
 
 test("multiline soa", () => {
