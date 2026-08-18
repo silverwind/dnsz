@@ -184,7 +184,7 @@ function stripParens(s: string): string {
 
 function denormalize(name: string) {
   if (name && !name.endsWith(".")) {
-    name = `${name}.`;
+    name += ".";
   }
   return name.replace(/\.{2,}/g, ".").replace(/@\./g, "@");
 }
@@ -220,7 +220,7 @@ function parseTTL(ttl: string | number, def?: number): number {
   }
 
   const matches = Array.from(ttl.matchAll(/(\d+)([smhdw]?)/gi));
-  if (!matches.length) return clampTTL(typeof def === "number" ? def : Number.NaN);
+  if (!matches.length) return clampTTL(typeof def === "number" ? def : NaN);
   return clampTTL(matches.reduce((acc, [, num, unit]) =>
     acc + Number.parseInt(num) * (ttlUnit[unit.toLowerCase()] || 1), 0));
 }
