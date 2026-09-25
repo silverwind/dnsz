@@ -3,7 +3,10 @@
   "version": "4.5.3",
   "description": "Generic DNS zone file parser and stringifier",
   "author": "silverwind <me@silverwind.io>",
-  "repository": "silverwind/dnsz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/silverwind/dnsz.git"
+  },
   "license": "BSD-2-Clause",
   "type": "module",
   "sideEffects": false,
