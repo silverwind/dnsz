@@ -221,8 +221,8 @@ function parseTTL(ttl: string | number, def?: number): number {
 
   const matches = Array.from(ttl.matchAll(/(\d+)([smhdw]?)/gi));
   if (!matches.length) return clampTTL(typeof def === "number" ? def : NaN);
-  return clampTTL(matches.reduce((acc, [, num, unit]) =>
-    acc + Number.parseInt(num) * (ttlUnit[unit.toLowerCase()] || 1), 0));
+  return clampTTL(matches.reduce((acc, match) =>
+    acc + Number.parseInt(match[1]) * (ttlUnit[match[2].toLowerCase()] || 1), 0));
 }
 
 type FormatOpts = {
@@ -354,8 +354,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
   if (replaceOrigin) data.origin = normalize(replaceOrigin);
 
-  // eslint-disable-next-line regexp/no-misleading-capturing-group
-  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*((?:[0-9]+[smhdw]?)+)?\s*([a-z]+[0-9]*)?\s+([a-z]+[0-9]*)?\s+(.+)$/i;
+  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*((?:[0-9]+[smhdw]?)+)?\s*([a-z]+[0-9]*)?\s+([a-z]+[0-9]*)?\s+(.+)$/i; // eslint-disable-line regexp/no-misleading-capturing-group -- name and ttl overlap, disambiguated after exec
 
   data.records = [];
   let prevName = "";
@@ -369,7 +368,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
       continue;
     }
 
-    let [, name, ttl, cls, type, contentAndComment] = reLine.exec(line) || [];
+    let [name, ttl, cls, type, contentAndComment] = (reLine.exec(line) || []).slice(1);
     if (!ttl && name && /^[0-9]/.test(name)) {
       ttl = name;
       name = "";
