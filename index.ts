@@ -77,15 +77,19 @@ function normalize(name: string) {
 function splitString(input: string, separator: string): Array<string> {
   const parts: Array<string> = [];
   let current = "";
+  let end = -1; // closing quote position, cached so repeated unclosed quotes don't rescan the line
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
     if (char === "\\") {
       current += input.slice(i, i + 2);
       i++;
     } else if (char === `"`) {
-      let end = input.indexOf(`"`, i + 1);
-      while (end > -1 && input[end - 1] === "\\") end = input.indexOf(`"`, end + 1);
-      if (end > -1) {
+      if (end <= i) {
+        end = input.indexOf(`"`, i + 1);
+        while (end > -1 && input[end - 1] === "\\") end = input.indexOf(`"`, end + 1);
+        if (end === -1) end = input.length;
+      }
+      if (end < input.length) {
         current += input.slice(i, end + 1);
         i = end;
       } else {
