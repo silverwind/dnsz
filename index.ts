@@ -107,19 +107,16 @@ function splitString(input: string, separator: string): Array<string> {
 }
 
 // RFC 1035 §5.1 parens only group data across lines, parens inside quotes are ignored
-function parenDepth(s: string): number {
-  let depth = 0;
-  let inQuote = false;
-  let escaped = false;
+function scanParens(s: string, state = {depth: 0, inQuote: false, escaped: false}) {
   for (const c of s) {
-    if (escaped) { escaped = false; continue; }
-    if (c === "\\") { escaped = true; continue; }
-    if (c === `"`) { inQuote = !inQuote; continue; }
-    if (inQuote) continue;
-    if (c === "(") depth++;
-    else if (c === ")") depth--;
+    if (state.escaped) { state.escaped = false; continue; }
+    if (c === "\\") { state.escaped = true; continue; }
+    if (c === `"`) { state.inQuote = !state.inQuote; continue; }
+    if (state.inQuote) continue;
+    if (c === "(") state.depth++;
+    else if (c === ")") state.depth--;
   }
-  return depth;
+  return state;
 }
 
 function stripParens(s: string): string {
@@ -244,12 +241,17 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   while (i < lines.length) {
     const {text: line, inherited} = lines[i];
     const [firstContent] = splitContentAndComment(line);
-    if (firstContent && parenDepth(firstContent) > 0) {
+    const parens = scanParens(firstContent || "");
+    if (firstContent && parens.depth > 0) {
       let combined = firstContent;
       i++;
-      while (i < lines.length && parenDepth(combined) > 0) {
+      while (i < lines.length && parens.depth > 0) {
         const [nextContent] = splitContentAndComment(lines[i].text);
-        if (nextContent) combined += ` ${nextContent}`;
+        if (nextContent) {
+          const appended = ` ${nextContent}`;
+          combined += appended;
+          scanParens(appended, parens);
+        }
         i++;
       }
       combinedLines.push({text: stripParens(combined), inherited});

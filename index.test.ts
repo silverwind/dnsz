@@ -773,10 +773,11 @@ test("multiline non-soa record", () => {
   expect(parseZoned.records[0].content).toEqual(`"v=spf1" " include:example.com" " -all"`);
 });
 
-test("unclosed quotes after escaped backslashes parse in linear time", () => {
+test("unclosed quotes and parens parse in linear time", () => {
   const content = `\\\\"`.repeat(20000);
   const start = performance.now();
   expect(parseZone(`a 60 IN TXT ${content}`).records[0].content).toEqual(content);
+  expect(parseZone(`a 60 IN TXT (${"\nx".repeat(30000)}`).records[0].content).toEqual("x ".repeat(30000).trim());
   expect(performance.now() - start).toBeLessThan(1000);
 });
 
