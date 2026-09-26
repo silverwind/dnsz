@@ -424,8 +424,12 @@ test("comments", () => {
     mx.commentzone.com.	60	IN	A	1.2.3.4	; another comment
     mx.commentzone.com.	60	IN	A	1.2.3.4	; another comment; more "stuff"; with "semi; colons"
 
+    ;; TXT Records
+    commentzone.com.	60	IN	TXT	"C:\\"	; "quoted" comment
+
   `}\n`;
   const parseZoned = parseZone(str);
+  expect(parseZoned.records[4].comment).toEqual(`"quoted" comment`);
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(str);
 });
