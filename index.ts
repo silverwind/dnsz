@@ -273,7 +273,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
   if (replaceOrigin) data.origin = normalize(replaceOrigin);
 
-  const reLine = /^([a-z0-9_.\-@*/+\\]+)?\s*((?:[0-9]+[smhdw]?)+)?\s*([a-z]+[0-9]*)?\s+([a-z]+[0-9]*)?\s+(.+)$/i; // eslint-disable-line regexp/no-misleading-capturing-group -- name and ttl overlap, disambiguated after exec
+  const reLine = /^(?:([a-z0-9_.\-@*/+\\]+)(?![a-z0-9_.\-@*/+\\]))?\s*([0-9]+(?:[smhdw][0-9]+)*[smhdw]?)?\s*([a-z]+[0-9]*)?\s+([a-z]+[0-9]*)?\s+(.+)$/i; // eslint-disable-line regexp/no-misleading-capturing-group -- ttl unit letters may also start the class
 
   data.records = [];
   let prevName = "";
