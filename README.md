@@ -24,7 +24,7 @@ stringifyZone(data);
 ## API
 ### parseZone(str, [opts])
 
-Parse a string of a DNS zone file and returns a `data` object.
+Parse a string of a DNS zone file and return a `data` object.
 
 - `opts.replaceOrigin` *string*: When specified, used instead of `$ORIGIN` to resolve `@` and relative names. Default: `null`.
 - `opts.crlf` *boolean*: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
@@ -49,7 +49,7 @@ Parse a `data` object and return a string with the zone file contents.
   - `type`: The record type, e.g. `"A"`.
   - `content`: The record content, e.g. `"2001:db8::1"` or `"example.com."`.
   - `comment`: A comment, e.g. `"a comment"`, `null` if absent.
-- `origin`: The value of `$ORIGIN` in the zone file.
+- `origin`: The value of `$ORIGIN` in the zone file, or `opts.replaceOrigin` when specified.
 - `ttl`: The value of `$TTL` in the zone file.
 - `header`: An optional header at the start of the file. Can be multiline. Does not include comment markers.
 

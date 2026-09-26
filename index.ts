@@ -16,7 +16,7 @@ export type DnszDnsRecord = {
 export type DnszDnsData = {
   /** Array of `record` */
   records: Array<DnszDnsRecord>;
-  /** The value of `$ORIGIN` in the zone file. */
+  /** The value of `$ORIGIN` in the zone file, or `replaceOrigin` when specified. */
   origin?: string;
   /** The value of `$TTL` in the zone file. */
   ttl?: number;
@@ -229,7 +229,7 @@ function splitContentAndComment(str?: string): [content: string | null, comment:
   return [parts[0] || null, parts[1] || null];
 }
 
-/** Parse a string of a DNS zone file and returns a `data` object. */
+/** Parse a string of a DNS zone file and return a `data` object. */
 export function parseZone(str: string, {replaceOrigin = null, crlf = false, defaultTTL = 60, defaultClass = "IN", dots = false}: DnszParseOptions = {}): DnszDnsData {
   const data: Partial<DnszDnsData> = {};
   const rawLines = str.split(/\r?\n/);
