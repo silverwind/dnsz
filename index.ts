@@ -25,7 +25,7 @@ export type DnszDnsData = {
 };
 
 export type DnszParseOptions = {
-  /** When specified, replaces any `@` in `name` or `content` with it. */
+  /** When specified, used instead of `$ORIGIN` to resolve `@` and relative names. */
   replaceOrigin?: string | null;
   /** When true, emit `\r\n` instead of `\n` in `header`. */
   crlf?: boolean;

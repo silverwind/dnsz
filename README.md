@@ -15,7 +15,7 @@ pnpm add dnsz
 import {parseZone, stringifyZone} from "dnsz";
 
 const data = parseZone("example.com 60 IN A 1.2.3.4");
-// => {records: [{name: "example.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4"}]}
+// => {records: [{name: "example.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: null}]}
 
 stringifyZone(data);
 // => ";; A Records\nexample.com.\t60\tIN\tA\t1.2.3.4\n"
@@ -26,7 +26,7 @@ stringifyZone(data);
 
 Parse a string of a DNS zone file and returns a `data` object.
 
-- `opts.replaceOrigin` *string*: When specified, replaces any `@` in `name` or `content` with it. Default: `null`.
+- `opts.replaceOrigin` *string*: When specified, used instead of `$ORIGIN` to resolve `@` and relative names. Default: `null`.
 - `opts.crlf` *boolean*: When true, emit `\r\n` instead of `\n` in `header`. Default: `false`.
 - `opts.defaultTTL` *number*: Default TTL when absent and `$TTL` is not present. Default: `60`.
 - `opts.defaultClass` *string*: Default class when absent. Default: `"IN"`.
@@ -99,7 +99,7 @@ mx  120 IN  AAAA    2001:db8::1
       "comment": "a comment"
     },
     {
-      "name": "mx",
+      "name": "mx.originzone.com",
       "ttl": 60,
       "class": "IN",
       "type": "A",
@@ -115,7 +115,7 @@ mx  120 IN  AAAA    2001:db8::1
       "comment": null
     },
     {
-      "name": "mx",
+      "name": "mx.originzone.com",
       "ttl": 120,
       "class": "IN",
       "type": "AAAA",
