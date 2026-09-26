@@ -7,9 +7,10 @@ All current and future record types are supported as the module makes no effort 
 
 ## Usage
 
-```bash
-npm i dnsz
+```sh
+pnpm add dnsz
 ```
+
 ```js
 import {parseZone, stringifyZone} from "dnsz";
 
@@ -124,7 +125,5 @@ mx  120 IN  AAAA    2001:db8::1
   ]
 }
 ```
-
-## License
 
 © [silverwind](https://github.com/silverwind), distributed under BSD licence
