@@ -1,141 +1,58 @@
 import {parseZone, stringifyZone} from "./index.ts";
 import dedent from "dedent";
 
-test("roundtrip", () => {
-  const str = `${dedent`
-    ;; SOA Records
-    simplezone.com.	3600	IN	SOA	simplezone.com. root.simplezone.com. 2031242781 7200 3600 86400 3600
+const sectionedZone = (apex: string, host = apex) => `${dedent`
+  ;; SOA Records
+  ${apex}.	3600	IN	SOA	${apex}. root.${apex}. 2031242781 7200 3600 86400 3600
 
-    ;; A Records
-    simplezone.com.	60	IN	A	1.2.3.4	; a comment
-    mx.simplezone.com.	60	IN	A	1.2.3.4	; another comment
+  ;; A Records
+  ${host}.	60	IN	A	1.2.3.4	; a comment
+  mx.${apex}.	60	IN	A	1.2.3.4	; another comment
 
-    ;; AAAA Records
-    simplezone.com.	120	IN	AAAA	2001:db8::1
-    mx.simplezone.com.	120	IN	AAAA	2001:db8::1
+  ;; AAAA Records
+  ${host}.	120	IN	AAAA	2001:db8::1
+  mx.${apex}.	120	IN	AAAA	2001:db8::1
 
-    ;; CAA Records
-    simplezone.com.	120	IN	CAA	0 issue "simplezone.com"
+  ;; CAA Records
+  ${host}.	120	IN	CAA	0 issue "${apex}"
 
-    ;; CNAME Records
-    cname1.simplezone.com.	120	IN	CNAME	simplezone.com.
-    cname2.simplezone.com.	120	IN	CNAME	simplezone.com.
+  ;; CNAME Records
+  cname1.${apex}.	120	IN	CNAME	${apex}.
+  cname2.${apex}.	120	IN	CNAME	${apex}.
 
-    ;; MX Records
-    simplezone.com.	120	IN	MX	10 mx.simplezone.com.
-    simplezone.com.	120	IN	MX	10 mx3.simplezone.com.
-    simplezone.com.	120	IN	MX	10 mx2.simplezone.com.
+  ;; MX Records
+  ${apex}.	120	IN	MX	10 mx.${apex}.
+  ${apex}.	120	IN	MX	10 mx3.${apex}.
+  ${apex}.	120	IN	MX	10 mx2.${apex}.
 
-    ;; TXT Records
-    simplezone.com.	120	IN	TXT	"first record"
-    simplezone.com.	120	IN	TXT	"second record"
-    simplezone.com.	120	IN	TXT	"third record"
+  ;; TXT Records
+  ${apex}.	120	IN	TXT	"first record"
+  ${apex}.	120	IN	TXT	"second record"
+  ${apex}.	120	IN	TXT	"third record"
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
-});
+`}\n`;
 
-test("basic", () => {
-  const str = `${dedent`
-    $ORIGIN originzone.com.
+const originZone = `${dedent`
+  $ORIGIN originzone.com.
 
-    ;; SOA Records
-    @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+  ;; SOA Records
+  @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
 
-    ;; A Records
-    @	60	IN	A	1.2.3.4	; a comment
-    mx	60	IN	A	1.2.3.4	; another comment
+  ;; A Records
+  @	60	IN	A	1.2.3.4	; a comment
+  mx	60	IN	A	1.2.3.4	; another comment
 
-    ;; AAAA Records
-    @	120	IN	AAAA	2001:db8::1
-    mx	120	IN	AAAA	2001:db8::1
+  ;; AAAA Records
+  @	120	IN	AAAA	2001:db8::1
+  mx	120	IN	AAAA	2001:db8::1
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
-  expect(parseZoned.records.length).toEqual(5);
+`}\n`;
 
-  for (const record of parseZoned.records) {
-    expect(record.name).toBeTruthy();
-    expect(record.ttl).toBeTruthy();
-    expect(record.class).toBeTruthy();
-    expect(record.type).toBeTruthy();
-    expect(record.content).toBeTruthy();
-    expect(typeof record.comment === "string" || record.comment === null).toBeTruthy();
-    expect(!record.name.includes("@")).toBeTruthy();
-    expect(!record.content.includes("@")).toBeTruthy();
-  }
-
-  parseZoned.origin = "testzone.com";
-  const withOrigin = stringifyZone(parseZoned);
-  expect(/^\$ORIGIN\s.+$/m.test(withOrigin)).toBe(true);
-});
-
-test("origin", () => {
-  const data = {
-    "origin": "originzone.com",
-    "records": [
-      {
-        "name": "originzone.com.",
-        "ttl": 3600,
-        "class": "IN",
-        "type": "SOA",
-        "content": "originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600",
-        "comment": null
-      },
-      {
-        "name": "a.originzone.com.",
-        "ttl": 60,
-        "class": "IN",
-        "type": "A",
-        "content": "1.2.3.4",
-        "comment": "a comment"
-      },
-    ],
-  };
-  const result = stringifyZone(data, {sections: true, dots: true});
-  expect(/^@/m.test(result)).toBe(true);
-});
-
-test("ttl", () => {
-  const str = `${dedent`
-    $ORIGIN ttlzone.com
-    $TTL 60
-
-    ;; SOA Records
-    @	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
-
-    ;; A Records
-    @	IN	A	1.2.3.4	; a comment
-    mx	60	IN	A	1.2.3.4	; another comment
-
-    ;; AAAA Records
-    @	IN	AAAA	2001:db8::1
-    mx	120	IN	AAAA	2001:db8::1
-
-  `}\n`;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records.length).toEqual(5);
-  for (const record of parseZoned.records) {
-    expect(record.name).toBeTruthy();
-    expect(record.ttl).toBeTruthy();
-    expect(record.class).toBeTruthy();
-    expect(record.type).toBeTruthy();
-    expect(record.content).toBeTruthy();
-    expect(typeof record.comment === "string" || record.comment === null).toBeTruthy();
-    expect(!record.name.includes("@")).toBeTruthy();
-    expect(!record.content.includes("@")).toBeTruthy();
-  }
-  parseZoned.ttl = 60;
-  const withTTL = stringifyZone(parseZoned);
-  expect(/^\$TTL\s[0-9]+$/m.test(withTTL)).toBe(true);
-});
-
-test("header", () => {
-  const str = `${dedent`
+test.each(Object.entries({
+  roundtrip: sectionedZone("simplezone.com"),
+  dash: sectionedZone("dash-zone.net"),
+  wildcard: sectionedZone("wildcard-zone.net", "*.wildcard-zone.net"),
+  header: `${dedent`
     ;; This is a
     ;;
     ;; header message
@@ -154,31 +71,80 @@ test("header", () => {
     @	60	IN	AAAA	2001:db8::1
     mx	120	IN	AAAA	2001:db8::1
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
+  `}\n`,
+  semicontent: `${dedent`
+    ;; SOA Records
+    semicontent.com.	3600	IN	SOA	semicontent.com. root.semicontent.com. 2031242781 7200 3600 86400 3600	; soa record
+
+    ;; TXT Records
+    @	3600	IN	TXT	"v=spf1 -all 2001::db8"	; txt record
+    _dmarc	3600	IN	TXT	"v=DMARC1; p=reject; sp=reject; rua=mailto:admin@semicontent.com ruf=admin@semicontent.com"	; txt record
+
+  `}\n`,
+  type65534: `${dedent`
+    ;; A Records
+    sub.typezone.com.	3600	IN	A	1.2.3.4
+
+    ;; TYPE65534 Records
+    typezone.com.	0	IN	TYPE65534	\# 5 0472C10000
+    typezone.com.	0	IN	TYPE65534	\# 5 048A880001
+    typezone.com.	0	IN	TYPE65534	\# 5 0493E10001
+
+  `}\n`,
+}))("%s", (_name, zone) => {
+  expect(stringifyZone(parseZone(zone))).toEqual(zone);
+});
+
+test("basic", () => {
+  const parsed = parseZone(originZone);
+  expect(stringifyZone(parsed)).toEqual(originZone);
+  expect(parsed.records).toEqual([
+    {name: "originzone.com", ttl: 3600, class: "IN", type: "SOA", content: "originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600", comment: null},
+    {name: "originzone.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: "a comment"},
+    {name: "mx.originzone.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: "another comment"},
+    {name: "originzone.com", ttl: 120, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+    {name: "mx.originzone.com", ttl: 120, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+  ]);
+  parsed.origin = "testzone.com";
+  expect(stringifyZone(parsed)).toMatch(/^\$ORIGIN\s.+$/m);
 });
 
 test("replaceOrigin", () => {
-  const str = dedent`
-    $ORIGIN originzone.com.
+  expect(parseZone(originZone, {replaceOrigin: "another.com"}).origin).toEqual("another.com");
+});
+
+test("origin", () => {
+  expect(stringifyZone({origin: "originzone.com", records: [
+    {name: "originzone.com.", ttl: 3600, class: "IN", type: "SOA", content: "originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600", comment: null},
+    {name: "a.originzone.com.", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: "a comment"},
+  ]}, {sections: true, dots: true})).toMatch(/^@/m);
+});
+
+test("ttl", () => {
+  const parsed = parseZone(`${dedent`
+    $ORIGIN ttlzone.com
+    $TTL 60
 
     ;; SOA Records
-    @	3600	IN	SOA	originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600
+    @	IN	SOA	ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600
 
     ;; A Records
-    @	60	IN	A	1.2.3.4	; a comment
+    @	IN	A	1.2.3.4	; a comment
     mx	60	IN	A	1.2.3.4	; another comment
 
     ;; AAAA Records
-    @	120	IN	AAAA	2001:db8::1
+    @	IN	AAAA	2001:db8::1
     mx	120	IN	AAAA	2001:db8::1
 
-  `;
-  const replaceOrigin = "another.com";
-  const parseZoned = parseZone(str, {replaceOrigin});
-  expect(parseZoned.origin).toEqual(replaceOrigin);
+  `}\n`);
+  expect(parsed.records).toEqual([
+    {name: "ttlzone.com", ttl: 60, class: "IN", type: "SOA", content: "ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600", comment: null},
+    {name: "ttlzone.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: "a comment"},
+    {name: "mx.ttlzone.com", ttl: 60, class: "IN", type: "A", content: "1.2.3.4", comment: "another comment"},
+    {name: "ttlzone.com", ttl: 60, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+    {name: "mx.ttlzone.com", ttl: 120, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+  ]);
+  expect(stringifyZone(parsed)).toMatch(/^\$TTL\s[0-9]+$/m);
 });
 
 test("nosections", () => {
@@ -203,13 +169,11 @@ test("nosections", () => {
     mx.nosectionszone.com.	60	IN	A	1.2.3.4	; another comment
 
   `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned, {sections: false});
-  expect(roundtripped).toEqual(str);
+  expect(stringifyZone(parseZone(str), {sections: false})).toEqual(str);
 });
 
 test("noname", () => {
-  const str = `${dedent`
+  const parsed = parseZone(`${dedent`
     ;; SOA Records
     nonamezone.com.	3600	IN	SOA	nonamezone.com. root.nonamezone.com. 2031242781 7200 3600 86400 3600
 
@@ -221,13 +185,9 @@ test("noname", () => {
     	120	IN	AAAA	2001:db8::1
     	120	IN	AAAA	2001:db8::1
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  for (const record of parseZoned.records) {
-    expect(record.name).toEqual("nonamezone.com");
-  }
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(`${dedent`
+  `}\n`);
+  expect(parsed.records.map(record => record.name)).toEqual(new Array(5).fill("nonamezone.com"));
+  expect(stringifyZone(parsed)).toEqual(`${dedent`
     ;; SOA Records
     nonamezone.com.	3600	IN	SOA	nonamezone.com. root.nonamezone.com. 2031242781 7200 3600 86400 3600
 
@@ -243,7 +203,7 @@ test("noname", () => {
 });
 
 test("nottl", () => {
-  const str = `${dedent`
+  const {records} = parseZone(`${dedent`
     ;; SOA Records
     @	IN	SOA	nottlzone. root.notttlzone.com. 2031242781 7200 3600 86400 3600
 
@@ -252,19 +212,14 @@ test("nottl", () => {
     mx	IN	A	1.2.3.4	; no ttl
         IN	A	1.2.3.4	; no name and ttl
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  for (const record of parseZoned.records) {
-    expect(typeof record.name).toEqual("string");
-    expect(typeof record.ttl).toEqual("number");
-    expect(record.class).toBeTruthy();
-    expect(record.type).toBeTruthy();
-    expect(record.content).toBeTruthy();
+  `}\n`);
+  for (const record of records) {
+    expect([typeof record.name, typeof record.ttl, Boolean(record.class && record.type && record.content)]).toEqual(["string", "number", true]);
   }
 });
 
 test("ttlunits", () => {
-  const str = `${dedent`
+  expect(parseZone(`${dedent`
     $ORIGIN ttlzone.com
     $TTL 1h
 
@@ -279,106 +234,13 @@ test("ttlunits", () => {
     @	1W	IN	AAAA	2001:db8::1
     mx	2s	IN	AAAA	2001:db8::1
 
-  `}\n`;
-  const parseZoned = parseZone(str);
-  for (const record of parseZoned.records) {
-    if (record.type === "SOA") {
-      expect(record.ttl).toEqual(3600);
-    }
-    expect(typeof record.name).toEqual("string");
-    expect(typeof record.ttl).toEqual("number");
-    expect(!Number.isNaN(record.ttl)).toBeTruthy();
-    expect(record.class).toBeTruthy();
-    expect(record.type).toBeTruthy();
-    expect(record.content).toBeTruthy();
-  }
-});
-
-test("semicontent", () => {
-  const str = `${dedent`
-    ;; SOA Records
-    semicontent.com.	3600	IN	SOA	semicontent.com. root.semicontent.com. 2031242781 7200 3600 86400 3600	; soa record
-
-    ;; TXT Records
-    @	3600	IN	TXT	"v=spf1 -all 2001::db8"	; txt record
-    _dmarc	3600	IN	TXT	"v=DMARC1; p=reject; sp=reject; rua=mailto:admin@semicontent.com ruf=admin@semicontent.com"	; txt record
-
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
-});
-
-test("dash", () => {
-  const str = `${dedent`
-    ;; SOA Records
-    dash-zone.net.	3600	IN	SOA	dash-zone.net. root.dash-zone.net. 2031242781 7200 3600 86400 3600
-
-    ;; A Records
-    dash-zone.net.	60	IN	A	1.2.3.4	; a comment
-    mx.dash-zone.net.	60	IN	A	1.2.3.4	; another comment
-
-    ;; AAAA Records
-    dash-zone.net.	120	IN	AAAA	2001:db8::1
-    mx.dash-zone.net.	120	IN	AAAA	2001:db8::1
-
-    ;; CAA Records
-    dash-zone.net.	120	IN	CAA	0 issue "dash-zone.net"
-
-    ;; CNAME Records
-    cname1.dash-zone.net.	120	IN	CNAME	dash-zone.net.
-    cname2.dash-zone.net.	120	IN	CNAME	dash-zone.net.
-
-    ;; MX Records
-    dash-zone.net.	120	IN	MX	10 mx.dash-zone.net.
-    dash-zone.net.	120	IN	MX	10 mx3.dash-zone.net.
-    dash-zone.net.	120	IN	MX	10 mx2.dash-zone.net.
-
-    ;; TXT Records
-    dash-zone.net.	120	IN	TXT	"first record"
-    dash-zone.net.	120	IN	TXT	"second record"
-    dash-zone.net.	120	IN	TXT	"third record"
-
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
-});
-
-test("wildcard", () => {
-  const str = `${dedent`
-    ;; SOA Records
-    wildcard-zone.net.	3600	IN	SOA	wildcard-zone.net. root.wildcard-zone.net. 2031242781 7200 3600 86400 3600
-
-    ;; A Records
-    *.wildcard-zone.net.	60	IN	A	1.2.3.4	; a comment
-    mx.wildcard-zone.net.	60	IN	A	1.2.3.4	; another comment
-
-    ;; AAAA Records
-    *.wildcard-zone.net.	120	IN	AAAA	2001:db8::1
-    mx.wildcard-zone.net.	120	IN	AAAA	2001:db8::1
-
-    ;; CAA Records
-    *.wildcard-zone.net.	120	IN	CAA	0 issue "wildcard-zone.net"
-
-    ;; CNAME Records
-    cname1.wildcard-zone.net.	120	IN	CNAME	wildcard-zone.net.
-    cname2.wildcard-zone.net.	120	IN	CNAME	wildcard-zone.net.
-
-    ;; MX Records
-    wildcard-zone.net.	120	IN	MX	10 mx.wildcard-zone.net.
-    wildcard-zone.net.	120	IN	MX	10 mx3.wildcard-zone.net.
-    wildcard-zone.net.	120	IN	MX	10 mx2.wildcard-zone.net.
-
-    ;; TXT Records
-    wildcard-zone.net.	120	IN	TXT	"first record"
-    wildcard-zone.net.	120	IN	TXT	"second record"
-    wildcard-zone.net.	120	IN	TXT	"third record"
-
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
+  `}\n`).records).toEqual([
+    {name: "ttlzone.com", ttl: 3600, class: "IN", type: "SOA", content: "ttlzone.com root.ttlzone.com 2031242781 7200 3600 86400 3600", comment: null},
+    {name: "ttlzone.com", ttl: 7200, class: "IN", type: "A", content: "1.2.3.4", comment: "a comment"},
+    {name: "mx.ttlzone.com", ttl: 300, class: "IN", type: "A", content: "1.2.3.4", comment: "another comment"},
+    {name: "ttlzone.com", ttl: 604800, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+    {name: "mx.ttlzone.com", ttl: 2, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+  ]);
 });
 
 test("dots", () => {
@@ -435,7 +297,7 @@ test("comments", () => {
 });
 
 test("single-line soa parens", () => {
-  const input = `${dedent`
+  const parsed = parseZone(`${dedent`
     $ORIGIN originzone.com.
 
     ;; SOA Records
@@ -443,8 +305,9 @@ test("single-line soa parens", () => {
 
     ;; A Records
     @	60	IN	A	1.2.3.4	; a comment
-  `}\n`;
-  const stripped = `${dedent`
+  `}\n`);
+  expect(parsed.records[0].content).toEqual("originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600");
+  expect(stringifyZone(parsed)).toEqual(`${dedent`
     $ORIGIN originzone.com.
 
     ;; SOA Records
@@ -453,14 +316,11 @@ test("single-line soa parens", () => {
     ;; A Records
     @	60	IN	A	1.2.3.4	; a comment
 
-  `}\n`;
-  const parseZoned = parseZone(input);
-  expect(parseZoned.records[0].content).toEqual("originzone.com. root.originzone.com. 2031242781 7200 3600 86400 3600");
-  expect(stringifyZone(parseZoned)).toEqual(stripped);
+  `}\n`);
 });
 
 test("multiline soa", () => {
-  const multilineSOA = `${dedent`
+  const parsed = parseZone(`${dedent`
     $ORIGIN localhost.
     @  86400  IN  SOA   @  root (
                       1999010100 ; serial
@@ -471,17 +331,12 @@ test("multiline soa", () => {
                         )
     @  60  IN  A  127.0.0.1
 
-  `}\n`;
-  const parseZoned = parseZone(multilineSOA);
-
-  expect(parseZoned.records.length).toEqual(2);
-  expect(parseZoned.records[0].type).toEqual("SOA");
-  expect(parseZoned.records[0].content).toEqual("@ root 1999010100 10800 900 604800 86400");
-  expect(parseZoned.records[0].ttl).toEqual(86400);
-  expect(parseZoned.records[1].type).toEqual("A");
-
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(`${dedent`
+  `}\n`);
+  expect(parsed.records).toEqual([
+    {name: "localhost", ttl: 86400, class: "IN", type: "SOA", content: "@ root 1999010100 10800 900 604800 86400", comment: null},
+    {name: "localhost", ttl: 60, class: "IN", type: "A", content: "127.0.0.1", comment: null},
+  ]);
+  expect(stringifyZone(parsed)).toEqual(`${dedent`
     $ORIGIN localhost.
 
     ;; SOA Records
@@ -493,8 +348,8 @@ test("multiline soa", () => {
   `}\n`);
 });
 
-test("multiline soa with comment on first line", () => {
-  const multilineSOA = dedent`
+test.each(Object.entries({
+  "multiline soa with comment on first line": dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. ( ; SOA record
                       2024010100 ; serial
@@ -504,17 +359,8 @@ test("multiline soa with comment on first line", () => {
                            86400 ; minimum
                          )
 
-  `;
-
-  const parseZoned = parseZone(multilineSOA);
-
-  expect(parseZoned.records.length).toEqual(1);
-  expect(parseZoned.records[0].type).toEqual("SOA");
-  expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
-});
-
-test("multiline soa with parentheses in comments", () => {
-  const multilineSOA = dedent`
+  `,
+  "multiline soa with parentheses in comments": dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. (
                       2024010100 ; serial (version)
@@ -524,17 +370,13 @@ test("multiline soa with parentheses in comments", () => {
                            86400 ; minimum (1 day)
                          )
 
-  `;
-
-  const parseZoned = parseZone(multilineSOA);
-
-  expect(parseZoned.records.length).toEqual(1);
-  expect(parseZoned.records[0].type).toEqual("SOA");
-  expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
+  `,
+}))("%s", (_name, zone) => {
+  expect(parseZone(zone).records.map(({type, content}) => [type, content])).toEqual([["SOA", "ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400"]]);
 });
 
 test("mixed single-line and multiline records", () => {
-  const mixed = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. (
                       2024010100
@@ -546,37 +388,15 @@ test("mixed single-line and multiline records", () => {
     @  60   IN  A     192.0.2.1
     @  60   IN  AAAA  2001:db8::1
 
-  `;
-
-  const parseZoned = parseZone(mixed);
-
-  expect(parseZoned.records.length).toEqual(3);
-  expect(parseZoned.records[0].type).toEqual("SOA");
-  expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
-  expect(parseZoned.records[1].type).toEqual("A");
-  expect(parseZoned.records[1].content).toEqual("192.0.2.1");
-  expect(parseZoned.records[2].type).toEqual("AAAA");
-  expect(parseZoned.records[2].content).toEqual("2001:db8::1");
-});
-
-test("type65534", () => {
-  const str = `${dedent`
-    ;; A Records
-    sub.typezone.com.	3600	IN	A	1.2.3.4
-
-    ;; TYPE65534 Records
-    typezone.com.	0	IN	TYPE65534	\# 5 0472C10000
-    typezone.com.	0	IN	TYPE65534	\# 5 048A880001
-    typezone.com.	0	IN	TYPE65534	\# 5 0493E10001
-
-  `}\n`;
-  const parseZoned = parseZone(str);
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(str);
+  `).records).toEqual([
+    {name: "example.com", ttl: 3600, class: "IN", type: "SOA", content: "ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400", comment: null},
+    {name: "example.com", ttl: 60, class: "IN", type: "A", content: "192.0.2.1", comment: null},
+    {name: "example.com", ttl: 60, class: "IN", type: "AAAA", content: "2001:db8::1", comment: null},
+  ]);
 });
 
 test("inoptional", () => {
-  const str = `${dedent`
+  const parseZoned = parseZone(`${dedent`
     example.com.	300	A	1.2.3.4
     example.com.	600	MX	10 mail.example.com.
     example.com.	172800	NS	foo.com.
@@ -586,8 +406,7 @@ test("inoptional", () => {
     _sip._tcp.example.com.	600	SRV	0 0 5060 sip.foo.com.
     _sips._tcp.example.com.	600	SRV	0 0 5061 sips.foo.com.
 
-  `}\n`;
-  const parseZoned = parseZone(str);
+  `}\n`);
   expect(parseZoned).toEqual({
     records: [
       {class: "IN", comment: null, content: "1.2.3.4", name: "example.com", ttl: 300, type: "A"},
@@ -600,8 +419,7 @@ test("inoptional", () => {
       {class: "IN", comment: null, content: "0 0 5061 sips.foo.com.", name: "_sips._tcp.example.com", ttl: 600, type: "SRV"},
     ],
   });
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(`${dedent`
+  expect(stringifyZone(parseZoned)).toEqual(`${dedent`
     ;; A Records
     example.com.	300	IN	A	1.2.3.4
 
@@ -626,103 +444,74 @@ test("inoptional", () => {
 });
 
 test("name inheritance", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
     @  60    IN  A    192.0.2.1
              60  IN  A    192.0.2.2
              60  IN  AAAA 2001:db8::1
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records.length).toEqual(4);
-  for (const record of parseZoned.records) {
-    expect(record.name).toEqual("example.com");
-  }
+  `).records.map(record => record.name)).toEqual(new Array(4).fill("example.com"));
 });
 
 test("relative name resolution", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     @    3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
     www  60    IN  A    192.0.2.1
     mail 60    IN  A    192.0.2.2
     example.com. 60 IN A 192.0.2.3
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[1].name).toEqual("www.example.com");
-  expect(parseZoned.records[2].name).toEqual("mail.example.com");
-  expect(parseZoned.records[3].name).toEqual("example.com");
+  `).records.map(record => record.name)).toEqual(["example.com", "www.example.com", "mail.example.com", "example.com"]);
 });
 
 test("multiple origin", () => {
-  const str = dedent`
+  const parsed = parseZone(dedent`
     $ORIGIN example.com.
     www  60  IN  A  192.0.2.1
     $ORIGIN sub.example.com.
     www  60  IN  A  192.0.2.2
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].name).toEqual("www.example.com");
-  expect(parseZoned.records[1].name).toEqual("www.sub.example.com");
-  expect(parseZoned.origin).toEqual("sub.example.com");
+  `);
+  expect(parsed.records.map(record => record.name)).toEqual(["www.example.com", "www.sub.example.com"]);
+  expect(parsed.origin).toEqual("sub.example.com");
 });
 
 test("multiple ttl", () => {
-  const str = dedent`
+  const parsed = parseZone(dedent`
     $ORIGIN example.com.
     $TTL 60
     @  IN  A  192.0.2.1
     $TTL 120
     @  IN  A  192.0.2.2
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].ttl).toEqual(60);
-  expect(parseZoned.records[1].ttl).toEqual(120);
-  expect(parseZoned.ttl).toEqual(120);
-});
-
-test("ttl clamping", () => {
-  const str = dedent`
-    example.com.  9999999999  IN  A  192.0.2.1
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].ttl).toEqual(2147483647);
+  `);
+  expect(parsed.records.map(record => record.ttl)).toEqual([60, 120]);
+  expect(parsed.ttl).toEqual(120);
 });
 
 test("class inheritance", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
     @  60    IN  A    192.0.2.1
     @  60         A   192.0.2.2
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[2].class).toEqual("IN");
+  `).records.map(record => record.class)).toEqual(["IN", "IN", "IN"]);
 });
 
 test("extended name characters", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     128/26.0.168.192.in-addr.arpa.  3600  IN  PTR  host.example.com.
     tag+test.example.com.  60  IN  A  192.0.2.1
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].name).toEqual("128/26.0.168.192.in-addr.arpa");
-  expect(parseZoned.records[0].type).toEqual("PTR");
-  expect(parseZoned.records[1].name).toEqual("tag+test.example.com");
-
-  const backslashStr = "host\\032name.example.com.\t60\tIN\tA\t192.0.2.1";
-  const parsed2 = parseZone(backslashStr);
-  expect(parsed2.records[0].name).toEqual("host\\032name.example.com");
+  `).records).toEqual([
+    {name: "128/26.0.168.192.in-addr.arpa", ttl: 3600, class: "IN", type: "PTR", content: "host.example.com.", comment: null},
+    {name: "tag+test.example.com", ttl: 60, class: "IN", type: "A", content: "192.0.2.1", comment: null},
+  ]);
+  expect(parseZone("host\\032name.example.com.\t60\tIN\tA\t192.0.2.1").records[0].name).toEqual("host\\032name.example.com");
 });
 
 test("relative name with dots", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     @       3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
     sub.www  60   IN  A    192.0.2.1
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[1].name).toEqual("sub.www.example.com");
+  `).records.map(record => record.name)).toEqual(["example.com", "sub.www.example.com"]);
 });
 
 test("relative name resolution roundtrip", () => {
@@ -734,47 +523,37 @@ test("relative name resolution roundtrip", () => {
     mail	60	IN	A	192.0.2.2
 
   `}\n`;
-  const parseZoned = parseZone(input);
-  expect(parseZoned.records[0].name).toEqual("www.example.com");
-  expect(parseZoned.records[1].name).toEqual("mail.example.com");
-  const roundtripped = stringifyZone(parseZoned);
-  expect(roundtripped).toEqual(input);
+  const parsed = parseZone(input);
+  expect(parsed.records.map(record => record.name)).toEqual(["www.example.com", "mail.example.com"]);
+  expect(stringifyZone(parsed)).toEqual(input);
 });
 
 test("name inheritance across directives", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     $ORIGIN example.com.
     www  60  IN  A  192.0.2.1
     $TTL 120
          60  IN  A  192.0.2.2
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].name).toEqual("www.example.com");
-  expect(parseZoned.records[1].name).toEqual("www.example.com");
+  `).records.map(record => record.name)).toEqual(["www.example.com", "www.example.com"]);
 });
 
 test("class inheritance chain", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     example.com.  3600  IN  SOA  ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400
     example.com.  60         A   192.0.2.1
     example.com.  60         A   192.0.2.2
     example.com.  60         AAAA 2001:db8::1
-  `;
-  const parseZoned = parseZone(str);
-  for (const record of parseZoned.records) {
-    expect(record.class).toEqual("IN");
-  }
+  `).records.map(record => record.class)).toEqual(new Array(4).fill("IN"));
 });
 
 test("multiline non-soa record", () => {
-  const str = dedent`
+  expect(parseZone(dedent`
     example.com.  3600  IN  TXT  ("v=spf1"
                                   " include:example.com"
                                   " -all")
-  `;
-  const parseZoned = parseZone(str);
-  expect(parseZoned.records[0].type).toEqual("TXT");
-  expect(parseZoned.records[0].content).toEqual(`"v=spf1" " include:example.com" " -all"`);
+  `).records).toEqual([
+    {name: "example.com", ttl: 3600, class: "IN", type: "TXT", content: `"v=spf1" " include:example.com" " -all"`, comment: null},
+  ]);
 });
 
 test("unclosed quotes, unclosed parens and long tokens parse in linear time", () => {
@@ -786,8 +565,7 @@ test("unclosed quotes, unclosed parens and long tokens parse in linear time", ()
   expect(performance.now() - start).toBeLessThan(1000);
 });
 
-test("ttl clamping boundaries", () => {
-  expect(parseZone(dedent`example.com. 0 IN A 192.0.2.1`).records[0].ttl).toEqual(0);
-  expect(parseZone(dedent`example.com. 2147483647 IN A 192.0.2.1`).records[0].ttl).toEqual(2147483647);
-  expect(parseZone(dedent`example.com. 2147483648 IN A 192.0.2.1`).records[0].ttl).toEqual(2147483647);
+test("ttl clamping", () => {
+  expect([0, 2147483647, 2147483648, 9999999999].map(ttl => parseZone(`example.com. ${ttl} IN A 192.0.2.1`).records[0].ttl))
+    .toEqual([0, 2147483647, 2147483647, 2147483647]);
 });
