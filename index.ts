@@ -1,53 +1,53 @@
 export type DnszDnsRecord = {
-    /**The lowercase DNS name without a trailing dot, e.g. `"example.com"`. */
+  /** The lowercase DNS name without a trailing dot, e.g. `"example.com"`. */
   name: string;
-    /** The TTL in seconds, e.g. `60`. */
+  /** The TTL in seconds, e.g. `60`. */
   ttl: number;
-    /** The DNS class, e.g. `"IN"`. */
+  /** The DNS class, e.g. `"IN"`. */
   class: string;
-    /** The record type, e.g. `"A"`. */
+  /** The record type, e.g. `"A"`. */
   type: string;
-    /** The record content, e.g. `"2001:db8::1"` or `"example.com."`. */
+  /** The record content, e.g. `"2001:db8::1"` or `"example.com."`. */
   content: string;
-    /** A comment, e.g. `"a comment"`, `null` if absent. */
+  /** A comment, e.g. `"a comment"`, `null` if absent. */
   comment: string | null;
 };
 
 export type DnszDnsData = {
-    /** Array of `record` */
+  /** Array of `record` */
   records: Array<DnszDnsRecord>;
-    /**  The value of `$ORIGIN` in the zone file. */
+  /** The value of `$ORIGIN` in the zone file. */
   origin?: string;
-    /** The value of `$TTL` in the zone file. */
+  /** The value of `$TTL` in the zone file. */
   ttl?: number;
-    /** An optional header at the start of the file. Can be multiline. Does not include comment markers. */
+  /** An optional header at the start of the file. Can be multiline. Does not include comment markers. */
   header?: string;
 };
 
 export type DnszParseOptions = {
-    /** When specified, replaces any `@` in `name` or `content` with it. */
+  /** When specified, replaces any `@` in `name` or `content` with it. */
   replaceOrigin?: string | null;
-    /** When true, emit `\r\n` instead of `\n` in `header`. */
+  /** When true, emit `\r\n` instead of `\n` in `header`. */
   crlf?: boolean;
-    /** Default class when absent. */
+  /** Default class when absent. */
   defaultClass?: string;
-    /** Default TTL when absent and `$TTL` is not present. */
+  /** Default TTL when absent and `$TTL` is not present. */
   defaultTTL?: number;
-    /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. */
+  /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. */
   dots?: boolean;
 };
 
 export type DnszStringifyOptions = {
-    /** Whether to group records into sections. */
+  /** Whether to group records into sections. */
   sections?: boolean;
-    /** When `true`, emit `\r\n` instead of `\n` for the resulting zone file. */
+  /** When `true`, emit `\r\n` instead of `\n` for the resulting zone file. */
   crlf?: boolean;
-    /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`. */
+  /** Ensure trailing dots on FQDNs in content. Supports a limited amount of record types. Default: `false`. */
   dots?: boolean;
 };
 
-// List of types and places where they have name-like content, used on the `dot` option.
-const nameLike = {
+// Indexes of name-like content fields per record type, used by the `dots` option
+const nameLike: Record<string, Array<number>> = {
   ALIAS: [0],
   ANAME: [0],
   CNAME: [0],
@@ -67,91 +67,42 @@ const nameLike = {
 };
 
 function normalize(name: string) {
-  name = (name || "").toLowerCase();
+  name = name.toLowerCase();
   if (name.endsWith(".") && name.length > 1) {
-    name = name.substring(0, name.length - 1);
+    name = name.slice(0, -1);
   }
   return name.replace(/\.{2,}/g, ".").replace(/@\./g, "@");
 }
 
-function splitString(input: string, {separator = " ", quotes = []}: {separator?: string, quotes?: Array<string>} = {}) {
-  const ast = {type: "root", nodes: [], stash: [""]};
-  const stack = [ast];
-  const string = input;
-  let value: string;
-  let node: any;
-  let i = -1;
-  const state: Record<string, any> = {stack};
-
-  const block = () => (state.block = stack[stack.length - 1]);
-  const peek = () => string[i + 1];
-  const next = () => string[++i];
-  const append = (value: string) => {
-    state.value = value;
-    if (value) {
-      state.block.stash[state.block.stash.length - 1] += value;
-    }
-  };
-
-  const closeIndex = (value: string, startIdx: number) => {
-    let idx = string.indexOf(value, startIdx);
-    if (idx > -1 && string[idx - 1] === "\\") {
-      idx = closeIndex(value, idx + 1);
-    }
-    return idx;
-  };
-
-  while (i < string.length - 1) {
-    state.value = value = next();
-    state.index = i;
-    block();
-
-    if (value === "\\") {
-      if (peek() === "\\") {
-        append(value + next());
+function splitString(input: string, separator: string): Array<string> {
+  const parts: Array<string> = [];
+  let current = "";
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (char === "\\") {
+      current += input.slice(i, i + 2);
+      i++;
+    } else if (char === `"`) {
+      let end = input.indexOf(`"`, i + 1);
+      while (end > -1 && input[end - 1] === "\\") end = input.indexOf(`"`, end + 1);
+      if (end > -1) {
+        current += input.slice(i, end + 1);
+        i = end;
       } else {
-        append(value);
-        append(next());
+        current += char;
       }
-      continue;
+    } else if (char === separator) {
+      parts.push(current);
+      current = "";
+    } else {
+      current += char;
     }
-
-    if (quotes.includes(value)) {
-      const pos = i + 1;
-      const idx = closeIndex(value, pos);
-
-      if (idx > -1) {
-        append(value);
-        append(string.slice(pos, idx));
-        append(string[idx]);
-        i = idx;
-        continue;
-      }
-
-      append(value);
-      continue;
-    }
-
-    if (value === separator && state.block.type === "root") {
-      state.block.stash.push("");
-      continue;
-    }
-
-    append(value);
   }
-
-  node = stack.pop();
-  while (node !== ast) {
-    value = (node.parent.stash.pop() + node.stash.join("."));
-    node.parent.stash = node.parent.stash.concat(value.split("."));
-    node = stack.pop();
-  }
-
-  return node.stash;
+  parts.push(current);
+  return parts;
 }
 
-// RFC 1035 §5.1: parens group data across line boundaries and have no
-// other meaning. These helpers ignore parens inside quoted strings.
+// RFC 1035 §5.1 parens only group data across lines, parens inside quotes are ignored
 function parenDepth(s: string): number {
   let depth = 0;
   let inQuote = false;
@@ -189,11 +140,10 @@ function denormalize(name: string) {
   return name.replace(/\.{2,}/g, ".").replace(/@\./g, "@");
 }
 
-function addDots(content: string, indexes: Array<number>): string {
-  const parts = splitString(content, {
-    quotes: [`"`],
-    separator: " ",
-  }).map((s: string) => s.trim()).filter(Boolean);
+function addDots(content: string, type: string): string {
+  if (!(type in nameLike)) return content;
+  const indexes = nameLike[type];
+  const parts = splitString(content, " ").map(part => part.trim()).filter(Boolean);
   for (const index of indexes) {
     if (parts[index] && !parts[index].endsWith(".")) {
       parts[index] += ".";
@@ -210,11 +160,7 @@ function clampTTL(value: number): number {
 
 const ttlUnit: Record<string, number> = {s: 1, m: 60, h: 3600, d: 86400, w: 604800};
 
-function parseTTL(ttl: string | number, def?: number): number {
-  if (typeof ttl === "number") {
-    return clampTTL(ttl);
-  }
-
+function parseTTL(ttl: string, def?: number): number {
   if (typeof def === "number" && !ttl) {
     return clampTTL(def);
   }
@@ -233,14 +179,14 @@ type FormatOpts = {
 };
 
 function format(records: Array<DnszDnsRecord | undefined>, type: string | null, {origin, newline, sections, dots}: FormatOpts) {
-  let str = ``;
+  let str = "";
 
-  if (sections && type) {
+  if (type) {
     str += `;; ${type} Records${newline}`;
   }
 
   const suffix = origin ? `.${origin}` : "";
-  for (const record of records || []) {
+  for (const record of records) {
     if (!record) continue;
     let name = normalize(record.name || "");
 
@@ -254,13 +200,6 @@ function format(records: Array<DnszDnsRecord | undefined>, type: string | null, 
       }
     } else if (name.includes(".")) {
       name = denormalize(name);
-    } else {
-      name = normalize(name);
-    }
-
-    let content = record.content;
-    if (dots && record.type in nameLike) {
-      content = addDots(content, nameLike[record.type as keyof typeof nameLike]);
     }
 
     const fields = [
@@ -268,7 +207,7 @@ function format(records: Array<DnszDnsRecord | undefined>, type: string | null, 
       record.ttl,
       record.class,
       record.type,
-      content,
+      dots ? addDots(record.content, record.type) : record.content,
     ];
 
     if (record.comment) {
@@ -280,29 +219,11 @@ function format(records: Array<DnszDnsRecord | undefined>, type: string | null, 
   return `${str}${sections ? newline : ""}`;
 }
 
-function splitContentAndComment(str?: string): [content: string | null, comment: string | null | undefined] {
+function splitContentAndComment(str?: string): [content: string | null, comment: string | null] {
   if (!str) return [null, null];
-  const splitted = splitString(str, {
-    quotes: [`"`],
-    separator: ";",
-  });
-
-  let parts: Array<string>;
-  if (splitted.length > 2) { // more than one semicolon
-    parts = [splitted[0], splitted.slice(1).join(";")];
-  } else {
-    parts = splitted;
-  }
-
-  parts = parts.map((part: string) => (part || "").trim()).filter(Boolean);
-
-  if (parts.length <= 2) {
-    return [parts[0] || null, parts[1] || null];
-  } else {
-    const comment = parts.pop();
-    const content = parts.join("; ");
-    return [content, comment];
-  }
+  const [first, ...rest] = splitString(str, ";");
+  const parts = [first, rest.join(";")].map(part => part.trim()).filter(Boolean);
+  return [parts[0] || null, parts[1] || null];
 }
 
 /** Parse a string of a DNS zone file and returns a `data` object. */
@@ -310,7 +231,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   const data: Partial<DnszDnsData> = {};
   const rawLines = str.split(/\r?\n/);
   const trimmedRawLines = rawLines.map(l => l.trim());
-  let lines = trimmedRawLines.map((text, i) => ({text, inherited: /^\s/.test(rawLines[i])})).filter(({text}) => Boolean(text) && !text.startsWith(";"));
+  const lines = trimmedRawLines.map((text, i) => ({text, inherited: /^\s/.test(rawLines[i])})).filter(({text}) => Boolean(text) && !text.startsWith(";"));
   const newline = crlf ? "\r\n" : "\n";
 
   // multiline record support (RFC 1035 §5.1)
@@ -319,14 +240,12 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   while (i < lines.length) {
     const {text: line, inherited} = lines[i];
     const [firstContent] = splitContentAndComment(line);
-    const head = firstContent || "";
-    if (parenDepth(head) > 0) {
-      let combined = head;
+    if (firstContent && parenDepth(firstContent) > 0) {
+      let combined = firstContent;
       i++;
       while (i < lines.length && parenDepth(combined) > 0) {
         const [nextContent] = splitContentAndComment(lines[i].text);
-        const next = (nextContent || "").trim();
-        if (next) combined += ` ${next}`;
+        if (nextContent) combined += ` ${nextContent}`;
         i++;
       }
       combinedLines.push({text: stripParens(combined), inherited});
@@ -335,21 +254,15 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
       i++;
     }
   }
-  lines = combinedLines;
 
-  // search for header
   const headerLines: Array<string> = [];
-  let valid: boolean = false;
   for (const [index, line] of trimmedRawLines.entries()) {
     if (line.startsWith(";;")) {
       headerLines.push(line.substring(2).trim());
-    } else if (line === "" && index >= 1 && trimmedRawLines[index - 1]?.startsWith(";;")) {
-      valid = true;
+    } else if (line === "" && index >= 1 && trimmedRawLines[index - 1].startsWith(";;")) {
+      data.header = headerLines.join(newline);
       break;
     }
-  }
-  if (valid && headerLines.length) {
-    data.header = headerLines.join(newline);
   }
 
   if (replaceOrigin) data.origin = normalize(replaceOrigin);
@@ -359,12 +272,12 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
   data.records = [];
   let prevName = "";
   let prevClass = defaultClass;
-  for (const {text: line, inherited} of lines) {
+  for (const {text: line, inherited} of combinedLines) {
     if (line.startsWith("$")) {
       const parsedOrigin = (/^\$ORIGIN\s+(\S+)/i.exec(line) || [])[1];
       if (parsedOrigin && !replaceOrigin) data.origin = normalize(parsedOrigin);
       const parsedTtl = (/^\$TTL\s+(\S+)/i.exec(line) || [])[1];
-      if (parsedTtl) data.ttl = parseTTL(normalize(parsedTtl));
+      if (parsedTtl) data.ttl = parseTTL(parsedTtl);
       continue;
     }
 
@@ -385,19 +298,15 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
     type = type.toUpperCase();
     cls = cls.toUpperCase();
-    content = (content || "").trim();
-    if (dots && type in nameLike) {
-      content = addDots(content, nameLike[type as keyof typeof nameLike]);
-    }
+    if (dots) content = addDots(content, type);
 
     // Resolve name: inheritance, then relative-to-origin (RFC 1035 §5.1)
-    const isAbsolute = name.endsWith(".");
     let resolvedName: string;
     if (inherited && prevName) {
       resolvedName = prevName;
     } else if ((!name || name === "@") && data.origin) {
       resolvedName = data.origin;
-    } else if (name && name !== "@" && !isAbsolute && data.origin) {
+    } else if (data.origin && !name.endsWith(".")) {
       resolvedName = `${normalize(name)}.${data.origin}`;
     } else {
       resolvedName = normalize(name);
@@ -414,7 +323,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
       class: cls,
       type,
       content,
-      comment: (comment || "").trim() || null,
+      comment,
     });
   }
 
@@ -452,22 +361,19 @@ export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true,
   if (data.ttl !== undefined) vars.push(`$TTL ${data.ttl}`);
   if (vars.length) output += `${vars.join(newline)}${newline}${newline}`;
 
-  const origin = normalize(data.origin || "");
+  const formatOpts = {origin: normalize(data.origin || ""), newline, sections, dots};
   if (sections) {
     if (recordsByType.SOA) {
-      output += format(recordsByType.SOA, "SOA", {origin, newline, sections, dots});
+      output += format(recordsByType.SOA, "SOA", formatOpts);
       delete recordsByType.SOA;
     }
 
     for (const type of Object.keys(recordsByType).sort()) {
-      output += format(recordsByType[type], type, {origin, newline, sections, dots});
+      output += format(recordsByType[type], type, formatOpts);
     }
   } else {
-    const recordsSOA = data.records.filter(r => r.type === "SOA");
-    const recordsMinusSOA = data.records.filter(r => r.type !== "SOA");
-
-    output += format(recordsSOA, null, {origin, newline, sections, dots});
-    output += format(recordsMinusSOA, null, {origin, newline, sections, dots});
+    output += format(data.records.filter(r => r.type === "SOA"), null, formatOpts);
+    output += format(data.records.filter(r => r.type !== "SOA"), null, formatOpts);
   }
 
   return `${output.trim()}${newline}`;

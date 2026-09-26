@@ -223,7 +223,6 @@ test("noname", () => {
 
   `}\n`;
   const parseZoned = parseZone(str);
-  // RFC 1035 §5.1: blank owner inherits from previous record
   for (const record of parseZoned.records) {
     expect(record.name).toEqual("nonamezone.com");
   }
@@ -431,9 +430,7 @@ test("comments", () => {
   expect(roundtripped).toEqual(str);
 });
 
-test("soa parens", () => {
-  // RFC 1035 §5.1: parens are line-continuation markers only and carry no
-  // semantic meaning. They must be stripped from content even on a single line.
+test("single-line soa parens", () => {
   const input = `${dedent`
     $ORIGIN originzone.com.
 
@@ -459,7 +456,6 @@ test("soa parens", () => {
 });
 
 test("multiline soa", () => {
-  // Test parsing multi-line SOA record from fixture file
   const multilineSOA = `${dedent`
     $ORIGIN localhost.
     @  86400  IN  SOA   @  root (
@@ -474,14 +470,12 @@ test("multiline soa", () => {
   `}\n`;
   const parseZoned = parseZone(multilineSOA);
 
-  // Verify the SOA record was parsed correctly
   expect(parseZoned.records.length).toEqual(2);
   expect(parseZoned.records[0].type).toEqual("SOA");
   expect(parseZoned.records[0].content).toEqual("@ root 1999010100 10800 900 604800 86400");
   expect(parseZoned.records[0].ttl).toEqual(86400);
   expect(parseZoned.records[1].type).toEqual("A");
 
-  // The stringifier should output single-line format
   const roundtripped = stringifyZone(parseZoned);
   expect(roundtripped).toEqual(`${dedent`
     $ORIGIN localhost.
@@ -496,7 +490,6 @@ test("multiline soa", () => {
 });
 
 test("multiline soa with comment on first line", () => {
-  // Test with comment after opening parenthesis
   const multilineSOA = dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. ( ; SOA record
@@ -511,14 +504,12 @@ test("multiline soa with comment on first line", () => {
 
   const parseZoned = parseZone(multilineSOA);
 
-  // Verify the SOA record was parsed correctly
   expect(parseZoned.records.length).toEqual(1);
   expect(parseZoned.records[0].type).toEqual("SOA");
   expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
 });
 
 test("multiline soa with parentheses in comments", () => {
-  // Test that parentheses in comments don't interfere
   const multilineSOA = dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. (
@@ -533,14 +524,12 @@ test("multiline soa with parentheses in comments", () => {
 
   const parseZoned = parseZone(multilineSOA);
 
-  // Verify the SOA record was parsed correctly
   expect(parseZoned.records.length).toEqual(1);
   expect(parseZoned.records[0].type).toEqual("SOA");
   expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
 });
 
 test("mixed single-line and multiline records", () => {
-  // Test a zone file with both formats
   const mixed = dedent`
     $ORIGIN example.com.
     @  3600  IN  SOA   ns1.example.com. admin.example.com. (
@@ -557,7 +546,6 @@ test("mixed single-line and multiline records", () => {
 
   const parseZoned = parseZone(mixed);
 
-  // Verify all records were parsed
   expect(parseZoned.records.length).toEqual(3);
   expect(parseZoned.records[0].type).toEqual("SOA");
   expect(parseZoned.records[0].content).toEqual("ns1.example.com. admin.example.com. 2024010100 10800 900 604800 86400");
