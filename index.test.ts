@@ -109,6 +109,13 @@ test("basic", () => {
   expect(stringifyZone(parsed)).toMatch(/^\$ORIGIN\s.+$/m);
 });
 
+test("sections with inherited property names as record types", () => {
+  const types = ["__proto__", "constructor", "hasOwnProperty", "prototype", "toString", "valueOf"];
+  expect(stringifyZone({records: types.map(type => ({
+    name: "example.com", ttl: 60, class: "IN", type, content: "target", comment: null,
+  }))})).toEqual(types.map(type => `;; ${type} Records\nexample.com.\t60\tIN\t${type}\ttarget\n`).join("\n"));
+});
+
 test("replaceOrigin", () => {
   expect(parseZone(originZone, {replaceOrigin: "another.com"}).origin).toEqual("another.com");
 });
@@ -274,6 +281,13 @@ test("dots", () => {
   expect(stringifyZone(parseZone(nodotsstr, {dots: false}), {dots: false})).toEqual(nodotsstr);
   expect(stringifyZone(parseZone(nodotsstr, {dots: false}), {dots: true})).toEqual(dotsstr);
   expect(stringifyZone(parseZone(nodotsstr, {dots: true}), {dots: true})).toEqual(dotsstr);
+});
+
+test("dots preserves content for inherited property names as record types", () => {
+  const types = ["__proto__", "constructor", "hasOwnProperty", "prototype", "toString", "valueOf"];
+  expect(stringifyZone({records: types.map(type => ({
+    name: "example.com", ttl: 60, class: "IN", type, content: "target  value", comment: null,
+  }))}, {sections: false, dots: true})).toEqual(types.map(type => `example.com.\t60\tIN\t${type}\ttarget  value\n`).join(""));
 });
 
 test("comments", () => {

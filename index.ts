@@ -144,7 +144,7 @@ function denormalize(name: string) {
 }
 
 function addDots(content: string, type: string): string {
-  if (!(type in nameLike)) return content;
+  if (!Object.hasOwn(nameLike, type)) return content;
   const indexes = nameLike[type];
   const parts = splitString(content, " ").map(part => part.trim()).filter(Boolean);
   for (const index of indexes) {
@@ -344,7 +344,7 @@ export function parseZone(str: string, {replaceOrigin = null, crlf = false, defa
 
 /** Parse a `data` object and return a string with the zone file contents. */
 export function stringifyZone(data: DnszDnsData, {crlf = false, sections = true, dots = false}: DnszStringifyOptions = {}): string {
-  const recordsByType: Record<string, Array<DnszDnsRecord>> = {};
+  const recordsByType: Record<string, Array<DnszDnsRecord>> = Object.create(null);
   const newline = crlf ? "\r\n" : "\n";
 
   if (sections) {
